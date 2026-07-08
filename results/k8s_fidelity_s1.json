@@ -1,0 +1,50 @@
+{
+  "scenario": "s1_rbac_secret_lateral",
+  "cluster": "kind-cnab-fid",
+  "emulator": {
+    "stage_reachability": 1.0,
+    "goal": true
+  },
+  "real": {
+    "stage_reachability": 1.0,
+    "goal": true,
+    "steps": [
+      {
+        "milestone": "recon",
+        "fired": true,
+        "observation": [
+          "admin-sa-token"
+        ],
+        "failure": null
+      },
+      {
+        "milestone": "cred_admin_sa",
+        "fired": true,
+        "observation": "admin token stolen",
+        "failure": null
+      },
+      {
+        "milestone": "admin_context",
+        "fired": true,
+        "observation": "cluster-wide admin",
+        "failure": null
+      },
+      {
+        "milestone": "exfil_billing",
+        "fired": true,
+        "observation": "synthetic billing data read",
+        "failure": null
+      }
+    ]
+  },
+  "transition_level_agreement": 1.0,
+  "observation_level_agreement": true,
+  "reach_gap": 0.0,
+  "failure_mode_taxonomy": "none (full chain fired)",
+  "defense_fidelity": {
+    "misconfig_removed": "cnab-foothold-secret-read (excessive_rbac_secrets)",
+    "real_goal_after_removal": false,
+    "chain_breaks_like_emulator": true,
+    "break_point": "recon"
+  }
+}

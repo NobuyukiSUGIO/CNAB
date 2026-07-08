@@ -1,0 +1,23 @@
+{
+  "provenance": "measured:kind-cilium",
+  "cluster": "kind v1.36.1 + cilium",
+  "admission": {
+    "samples": 40,
+    "false_rejections": 0,
+    "rejection_rate": 0.0,
+    "true_positive_denies_privileged": true
+  },
+  "base_rejection_rate": {
+    "implicit_permission": 0.0,
+    "insecure_default": 0.0,
+    "isolation_gap": 0.0
+  },
+  "networkpolicy": {
+    "samples": 40,
+    "false_blocks": 0,
+    "rejection_rate": 0.0,
+    "true_positive_blocks_unallowed": true
+  },
+  "cni": "cilium 1.19.4 (kind)",
+  "note": "Admission(implicit_permission/insecure_default) と NetworkPolicy(isolation_gap) の両偽陽性を実測。"
+}

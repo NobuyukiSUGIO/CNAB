@@ -1,0 +1,7 @@
+# NetworkPolicy 実測用の kind クラスタ設定（Calico を後入れするため既定 CNI を無効化）。
+# 使い方: kind create cluster --name cnab-np --config k8s/kind-calico.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true          # kindnet を無効化（NetworkPolicy を強制しないため）
+  podSubnet: "192.168.0.0/16"      # Calico 既定マニフェスト(v3.28)の CALICO_IPV4POOL_CIDR に一致

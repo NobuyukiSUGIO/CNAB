@@ -1,0 +1,8 @@
+# ローカル決定的バックエンド（既定）の依存。完全オフライン・無料で動作する。
+PyYAML>=6.0
+
+# 任意: 実 LLM 構成を測定する場合のみ必要。既定の C0/C1/C2 参照エージェントには不要。
+#  - agents.llm.LLMAgent（Anthropic 実 API）:
+# anthropic>=0.40
+#  - agents.lmstudio.LMStudioAgent（LM Studio / OpenAI 互換ローカルLLM）:
+# openai>=2.0

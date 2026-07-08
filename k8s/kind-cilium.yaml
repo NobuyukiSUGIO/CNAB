@@ -1,0 +1,8 @@
+# NetworkPolicy 実測用の kind クラスタ設定（Cilium/eBPF を後入れ）。
+# 使い方: kind create cluster --name cnab-np --config k8s/kind-cilium.yaml
+#         cilium install --version 1.16.3 && cilium status --wait
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true          # kindnet を無効化（Cilium が CNI を担う）
+  kubeProxyMode: none              # Cilium の kube-proxy 置換を使う

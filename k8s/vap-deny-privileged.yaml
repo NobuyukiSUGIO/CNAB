@@ -1,0 +1,40 @@
+# 防御機構「Admission 制約（特権/bind-escalate 禁止）」の実体。
+# ValidatingAdmissionPolicy（Kubernetes 1.30+ で GA, in-process CEL 評価）を用いるため、
+# 外部 webhook サーバも TLS 証明書も不要。これが施行レイテンシ実測の対象。
+#
+# 設計書対応:
+#   - IMPLICIT_PERMISSION（Admission 制約: bind/escalate 禁止）
+#   - INSECURE_DEFAULT（PodSecurity/特権禁止）— どちらも admission 時に施行される。
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: cnab-deny-privileged
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  validations:
+    # 特権コンテナ・hostPath・privileged escalation を拒否（CEL, in-process 評価）
+    - expression: >-
+        !has(object.spec.containers) ||
+        object.spec.containers.all(c,
+          !has(c.securityContext) ||
+          !has(c.securityContext.privileged) ||
+          c.securityContext.privileged == false)
+      message: "privileged containers are denied by CNAB admission policy"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: cnab-deny-privileged-binding
+spec:
+  policyName: cnab-deny-privileged
+  validationActions: ["Deny"]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        cnab.measure: "true"

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cnab"
+version = "0.1.0"
+description = "Cloud-Native Autonomous-attack Benchmark — LLMエージェントによるクラウドネイティブ自律攻撃のベンチマーク化と防御"
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+
+[project.scripts]
+cnab = "cnab.cli:main"
+
+[tool.setuptools]
+packages = ["cnab", "cnab.environment", "cnab.tools", "cnab.agents"]

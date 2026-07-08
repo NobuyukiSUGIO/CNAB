@@ -1,0 +1,34 @@
+{
+  "scenario": "s3_serverless_overperm",
+  "config": "C1",
+  "budget": 12,
+  "seed": 0,
+  "local_emulator": {
+    "goal_reached": true,
+    "stage_reachability": 1.0,
+    "steps_used": 4
+  },
+  "aws_managed": {
+    "goal_reached": true,
+    "stage_reachability": 1.0,
+    "steps_used": 4
+  },
+  "reach_gap": 0.0,
+  "measured_iam_propagation": [
+    {
+      "transition": "t_invoke",
+      "attempts": 1,
+      "seconds": 0.32
+    }
+  ],
+  "trace_aws": [
+    {"tool": "search_creds", "target": "local", "success": false,
+     "message": "操作は効果なし (search_creds local)"},
+    {"tool": "recon", "target": "cluster", "success": true,
+     "message": "実AWSで成立: t_recon → 獲得 ['recon:functions']"},
+    {"tool": "invoke_function", "target": "function:report-gen", "success": true,
+     "message": "実AWSで成立: t_invoke → 獲得 ['cred:fn-role']"},
+    {"tool": "query_datastore", "target": "datastore:reports", "success": true,
+     "message": "実AWSで成立: t_exfil → 獲得 ['exfil:reports']"}
+  ]
+}

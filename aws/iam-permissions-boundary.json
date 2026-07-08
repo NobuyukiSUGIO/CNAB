@@ -1,0 +1,27 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BoundaryScopedResources",
+      "Effect": "Allow",
+      "Action": ["s3:*", "lambda:*", "iam:*", "sts:AssumeRole"],
+      "Resource": [
+        "arn:aws:s3:::cnab-reports-*",
+        "arn:aws:s3:::cnab-reports-*/*",
+        "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:cnab-report-gen-*",
+        "arn:aws:iam::<ACCOUNT_ID>:role/cnab-fn-exec-*"
+      ]
+    },
+    {
+      "Sid": "BoundaryAllowGlobalReadAndIdentity",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "lambda:ListFunctions",
+        "iam:GetRole",
+        "iam:ListRoles"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

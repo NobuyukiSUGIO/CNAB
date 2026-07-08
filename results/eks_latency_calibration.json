@@ -1,0 +1,21 @@
+{
+  "provenance": "measured:eks",
+  "cluster": "kind v0.32.0",
+  "samples": 60,
+  "baseline_median_ms": 65.623,
+  "enforced_median_ms": 65.901,
+  "admission_enforcement_latency_ms": 0.278,
+  "enforcement_latency_ms": {
+    "implicit_permission": 0.278,
+    "insecure_default": 0.278,
+    "isolation_gap": 0.0
+  },
+  "note": "NetworkPolicy(isolation_gap) はデータ経路のため本ハーネスでは測らない（Calico/Cilium 上で pod 間 TCP connect の A/B が必要, README 参照）。",
+  "networkpolicy": {
+    "cni": "calico v3.28",
+    "samples": 300,
+    "baseline_median_ms": 0.0371,
+    "enforced_median_ms": 0.0371,
+    "networkpolicy_enforcement_latency_ms": 0.0
+  }
+}

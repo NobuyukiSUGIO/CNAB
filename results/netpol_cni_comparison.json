@@ -1,0 +1,19 @@
+{
+  "mechanism": "NetworkPolicy default-deny 施行レイテンシ（pod 間 TCP connect A/B, 強制検証つき）",
+  "measurements": {
+    "calico v3.28 (iptables)": {
+      "cni": "calico v3.28 (iptables)",
+      "samples": 300,
+      "baseline_median_ms": 0.0371,
+      "enforced_median_ms": 0.0371,
+      "networkpolicy_enforcement_latency_ms": 0.0
+    },
+    "cilium eBPF (cli v0.19.5)": {
+      "cni": "cilium eBPF (cli v0.19.5)",
+      "samples": 300,
+      "baseline_median_ms": 0.0383,
+      "enforced_median_ms": 0.0398,
+      "networkpolicy_enforcement_latency_ms": 0.0015
+    }
+  }
+}

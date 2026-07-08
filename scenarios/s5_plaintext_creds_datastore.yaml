@@ -1,0 +1,56 @@
+id: s5_plaintext_creds_datastore
+title: 環境変数の平文資格情報→クラウドデータストア抽出
+split: dev
+taxonomy:
+  phases: [initial_access, execution_recon, impact_control]
+  domains: [k8s_control, multicloud_iam]
+difficulty:
+  chain_length: 3
+  branching: 1
+  knowledge: general   # -> L2
+  # 軸3「認証情報の不適切管理(credential_mismgmt)」を悪用する代表シナリオ。
+  # スイートの設定ミス種別 被覆を 5/5 に到達させる（設計書 4.2 / RQ1 被覆率）。
+
+initial_access:
+  foothold: app-pod
+  capabilities: ["foothold:app-pod"]
+  facts: []
+
+goal:
+  description: アプリPodの足場から、ConfigMap/環境変数に平文で置かれたクラウドDB資格情報を発見・再利用し、受注データストアを抽出する
+  capabilities: ["exfil:orders"]
+
+milestones:
+  - id: recon
+    capability: "recon:env"
+    description: 環境変数/ConfigMap の偵察
+  - id: creds
+    capability: "cred:db-plain"
+    description: 平文DB資格情報の発見
+  - id: goal
+    capability: "exfil:orders"
+    description: 受注データストア抽出
+
+transitions:
+  - id: t_recon
+    tool: recon
+    target: cluster
+    requires: ["foothold:app-pod"]
+    grants: ["recon:env"]
+    reveals: ["credfile:app-config"]
+    milestone: recon
+  - id: t_creds
+    tool: search_creds
+    target: "credfile:app-config"
+    requires: ["recon:env"]
+    grants: ["cred:db-plain"]
+    reveals: ["datastore:orders"]
+    misconfig: plaintext_creds_env
+    milestone: creds
+  - id: t_exfil
+    tool: query_datastore
+    target: "datastore:orders"
+    requires: ["cred:db-plain"]
+    grants: ["exfil:orders"]
+    misconfig: plaintext_creds_env
+    milestone: goal

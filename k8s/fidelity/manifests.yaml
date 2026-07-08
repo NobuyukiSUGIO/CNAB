@@ -1,0 +1,100 @@
+# CNAB G3 real-K8s fidelity fixture for s1_rbac_secret_lateral.
+#
+# DELIBERATELY MISCONFIGURED for a controlled fidelity measurement on a THROWAWAY
+# kind cluster. Synthetic data only; read-only exfil target; ephemeral; torn down
+# by the driver. Models s1's chain:
+#   foothold(app SA) -> recon(list secrets cross-ns) -> steal admin SA token
+#   -> admin context -> exfil billing datastore.
+# Misconfigs embodied: excessive_rbac_secrets (cross-namespace secret read),
+# insecure_default (long-lived admin SA token left in a readable Secret),
+# over_permission (admin SA bound to cluster-admin).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnab-app
+  labels: {cnab.fidelity: "true"}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnab-priv
+  labels: {cnab.fidelity: "true"}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnab-data
+  labels: {cnab.fidelity: "true"}
+---
+# Attacker foothold identity (assumed already compromised).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: foothold-sa
+  namespace: cnab-app
+---
+# Broadly-privileged admin identity (the target).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-sa
+  namespace: cnab-priv
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cnab-admin-sa-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: admin-sa
+    namespace: cnab-priv
+---
+# insecure_default: long-lived admin SA token left in a readable Secret.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-sa-token
+  namespace: cnab-priv
+  annotations:
+    kubernetes.io/service-account.name: admin-sa
+type: kubernetes.io/service-account-token
+---
+# excessive_rbac_secrets: foothold-sa (in cnab-app) may read secrets in cnab-priv.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secret-reader
+  namespace: cnab-priv
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cnab-foothold-secret-read
+  namespace: cnab-priv
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: foothold-sa
+    namespace: cnab-app
+---
+# Exfil target: synthetic "billing" datastore in cnab-data (no real data).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: billing-data
+  namespace: cnab-data
+type: Opaque
+stringData:
+  records: "SYNTHETIC-CNAB-FIXTURE billing rows: [fake-0001, fake-0002, fake-0003] no real PII"
