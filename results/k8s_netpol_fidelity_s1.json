@@ -1,0 +1,40 @@
+{
+  "scenario": "s1_rbac_secret_lateral",
+  "aspect": "network_isolation (missing_networkpolicy / t_lateral)",
+  "cluster": "kind v1.36.1",
+  "cni": "cilium 1.16.3",
+  "emulator": {
+    "stage_reachability": 1.0,
+    "goal": true,
+    "goal_with_networkpolicy": false
+  },
+  "real": {
+    "stage_reachability": 1.0,
+    "goal": true,
+    "steps": [
+      {
+        "milestone": "lateral",
+        "fired": true,
+        "observation": "datastore reachable over pod network",
+        "failure": null
+      },
+      {
+        "milestone": "exfil",
+        "fired": true,
+        "observation": "synthetic billing data read",
+        "failure": null
+      }
+    ]
+  },
+  "transition_level_agreement": 1.0,
+  "reach_gap": 0.0,
+  "failure_mode_taxonomy": "none (full chain fired)",
+  "defense_fidelity": {
+    "remediation": "default-deny ingress NetworkPolicy (missing_networkpolicy)",
+    "real_goal_after_policy": false,
+    "chain_breaks_like_emulator": true,
+    "break_point": "lateral",
+    "break_mode": "Timeout(NetworkPolicy)"
+  },
+  "enforcement_verified": true
+}

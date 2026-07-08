@@ -55,3 +55,36 @@ misconfig RoleBinding and re-runs the chain: it must break at recon/privesc with
 - `failure_mode_taxonomy`: classified reason for any non-firing step.
 - `defense_fidelity`: chain breaks on the real cluster when the misconfig is removed,
   and at which step, matching the emulator.
+
+---
+
+# G3 (network isolation): end-to-end NetworkPolicy chain for `s1` on kind+Cilium
+
+`measure_netpol_fidelity.py` validates the **data-path** side of `s1`
+(`missing_networkpolicy` / the `t_lateral` hop) as a full attack chain, not just an
+enforcement microbenchmark. This is the third real-infrastructure fidelity domain
+(after AWS IAM/serverless and K8s RBAC).
+
+Needs a **policy-enforcing CNI** (Cilium), so use the `kind-cilium.yaml` cluster:
+
+```bash
+# 1. kind cluster with Cilium (default CNI disabled):
+kind create cluster --name cnab-np --config k8s/kind-cilium.yaml
+cilium install --version 1.16.3 && cilium status --wait
+
+# 2. Measure (applies fixture, runs the real 2-step network chain, applies a
+#    default-deny NetworkPolicy, confirms the chain breaks + CNI enforces, tears down):
+python k8s/fidelity/measure_netpol_fidelity.py --cluster "kind v1.36.1" --cni "cilium 1.16.3"
+
+# 3. Teardown
+kind delete cluster --name cnab-np
+```
+
+Real chain (from the attacker foothold pod): (1) lateral TCP+HTTP hop to the datastore
+service (reachable with no NetworkPolicy) -> (2) HTTP GET the synthetic billing body
+(goal). Applying the default-deny NetworkPolicy the defense loop synthesizes breaks the
+chain at the lateral hop, matching the emulator with `missing_networkpolicy` disabled.
+`enforcement_verified` requires the same GET to succeed before the policy and fail after,
+so a never-reachable fixture cannot fake agreement. Result:
+`results/k8s_netpol_fidelity_s1.json`; write-up in
+[`../../results/K8S_NETPOL_FIDELITY.md`](../../results/K8S_NETPOL_FIDELITY.md).

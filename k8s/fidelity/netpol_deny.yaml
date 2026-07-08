@@ -1,0 +1,12 @@
+# Remediation for `missing_networkpolicy`: default-deny ingress in the datastore
+# namespace. With no matching allow rule, all ingress to every pod in cnab-net-data
+# is dropped by the CNI (Cilium/eBPF), so the attacker's lateral TCP hop fails.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: cnab-net-data
+  labels: {cnab.fidelity: "true"}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]

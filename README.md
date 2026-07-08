@@ -153,6 +153,17 @@ vulnerable resources — an irreversible action — CNAB never auto-applies it; 
 it in a dedicated disposable account and runs `terraform destroy` when finished** (see
 [`aws/README.md`](aws/README.md)).
 
+### End-to-end NetworkPolicy fidelity (kind + Cilium)
+`k8s/fidelity/measure_netpol_fidelity.py` validates the **data-path** side of `s1`
+(`missing_networkpolicy` / the `t_lateral` hop) as a full attack chain on a real
+kind+Cilium (eBPF) cluster — the third real-infrastructure fidelity domain after AWS
+IAM/serverless and K8s RBAC. An attacker foothold pod performs the lateral TCP hop to a
+synthetic datastore pod and exfiltrates over HTTP (transition agreement `1.0`, reach gap
+`0.0` vs. the emulator); applying the default-deny NetworkPolicy the defense loop
+synthesizes breaks the chain at the lateral hop (`enforcement_verified: true` — the same
+GET is reachable before the policy and blocked after). See
+[`results/K8S_NETPOL_FIDELITY.md`](results/K8S_NETPOL_FIDELITY.md).
+
 ### Ground-truth oracle (Layer 4)
 The oracle judges milestone attainment by **directly observing** environment state (held
 capabilities), never relying on the agent's self-report. This doubles as the ground truth

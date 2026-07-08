@@ -1,0 +1,69 @@
+# CNAB G3 real-K8s fidelity fixture for the NETWORK-ISOLATION side of
+# s1_rbac_secret_lateral (the `missing_networkpolicy` / `t_lateral` transition).
+#
+# DELIBERATELY unsegmented for a controlled fidelity measurement on a THROWAWAY
+# kind+Cilium cluster. Synthetic data only; read-only HTTP exfil; ephemeral; torn
+# down by the driver. Models s1's lateral network hop and exfil:
+#   attacker foothold pod -> (pod-to-pod TCP, no NetworkPolicy) -> datastore pod
+#   -> HTTP GET synthetic billing data.
+# Misconfig embodied: missing_networkpolicy (no default-deny; any pod may reach the
+# datastore). The default-deny remediation is applied separately (netpol_deny.yaml).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnab-net-app
+  labels: {cnab.fidelity: "true"}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnab-net-data
+  labels: {cnab.fidelity: "true"}
+---
+# Synthetic datastore: busybox httpd serving a fixture "billing" body on :8080.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: datastore
+  namespace: cnab-net-data
+  labels: {app: datastore, cnab.fidelity: "true"}
+spec:
+  containers:
+    - name: httpd
+      image: busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c"]
+      args:
+        - >
+          printf 'SYNTHETIC-CNAB-FIXTURE billing rows: [fake-0001,fake-0002,fake-0003] no real PII'
+          > /tmp/index.html &&
+          httpd -f -p 8080 -h /tmp
+      ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datastore-svc
+  namespace: cnab-net-data
+  labels: {cnab.fidelity: "true"}
+spec:
+  selector: {app: datastore}
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# Attacker foothold: a long-lived busybox the driver execs into to run the chain.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foothold
+  namespace: cnab-net-app
+  labels: {app: foothold, cnab.fidelity: "true"}
+spec:
+  containers:
+    - name: shell
+      image: busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command: ["sleep", "3600"]
