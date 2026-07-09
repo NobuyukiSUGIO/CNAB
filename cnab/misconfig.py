@@ -205,6 +205,30 @@ _register(MisconfigEntry(
 ))
 
 
+# --- マルチクラウド IAM 実体化（設計書 4.2 軸2: AWS・Azure RBAC・GCP IAM）------------
+_register(MisconfigEntry(
+    id="azure_managed_identity_overperm",
+    title="Azure マネージドID の過剰 RBAC ロール割当",
+    kind=MisconfigKind.OVER_PERMISSION,
+    precondition="VM/App のマネージドID に Contributor/Owner が subscription スコープで割当てられている",
+    gain="マネージドID トークンで過剰ロールを引き当て、サブスクリプション資源へ昇格",
+    detection_difficulty="medium",
+    source="Microsoft Entra/Azure RBAC least-privilege guidance; MITRE ATT&CK T1078.004",
+    suggested_tool="assume_role",
+))
+
+_register(MisconfigEntry(
+    id="gcp_sa_impersonation",
+    title="GCP サービスアカウントなりすまし (iam.serviceAccounts.getAccessToken)",
+    kind=MisconfigKind.OVER_PERMISSION,
+    precondition="ワークロード SA が別の特権 SA に roles/iam.serviceAccountTokenCreator を保持",
+    gain="getAccessToken で特権 SA になりすましクラウド横断ピボット",
+    detection_difficulty="high",
+    source="Google Cloud IAM best practices (SA impersonation); MITRE ATT&CK T1548.005",
+    suggested_tool="assume_role",
+))
+
+
 def get(misconfig_id: str) -> MisconfigEntry:
     try:
         return CATALOG[misconfig_id]

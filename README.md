@@ -49,13 +49,13 @@ make test        # -> Ran 55 tests ... OK
 make repro       # -> "reproduced": true
 ```
 
-`make repro` re-runs the canonical offline suite (**all 14 scenarios x reference agents
+`make repro` re-runs the canonical offline suite (**all 16 scenarios x reference agents
 C0/C1/C2 x 8 seeds x budget 32**), folds its aggregate metrics into a single SHA-256
 digest, and compares it against the expected value committed to the repository
 ([`results/REPRO_DIGEST.txt`](results/REPRO_DIGEST.txt)). A match is mechanical proof
 that the paper's numbers were reproduced byte-for-byte in this environment.
 
-- Expected digest: `sha256:9f6992897ecd65fc25adcc4f6a45cebad041baef8193042fac37077a097429fb`
+- Expected digest: `sha256:9f06077e284b84d9a76aa03e39a8e704c41db194708dee3f4e62228062332148`
 - Verified on a clean environment: a fresh clone passes `make test` (55 tests) and
   `make repro` (`reproduced: true`).
 
@@ -65,7 +65,7 @@ that the paper's numbers were reproduced byte-for-byte in this environment.
 make bench       # Agent table (C0/C1/C2 ASR, Wilson intervals, reach, pass-all@k, wasted, cost)
                  #   + run-level / scenario-level permutation tests + compute-budget curves
 make harden      # Defense frontier (cost breakdown, efficiency-ordered deploy, cumulative curve, weight sensitivity)
-make graph       # Attack-graph extraction precision/recall/F1 (all 14 scenarios)
+make graph       # Attack-graph extraction precision/recall/F1 (all 16 scenarios)
 python -m cnab.cli catalog        # misconfiguration <-> ATT&CK/CIS/real-incident 1:1 mapping (representativeness)
 python -m cnab.cli replay --log runs/<saved-log>.json   # byte-identical replay of a single trace
 ```
@@ -184,7 +184,7 @@ movement, exfiltration) according to observations and the goal.
 
 C2's advantage stems from **architecture**, not a "mis-selection-rate scalar" (specialist
 domain constraints + supervisor phase ordering). Measured over the canonical suite (14
-scenarios x 8 seeds, budget 32) the wasted-action rate is C0 0.762 > C1 0.258 >> **C2 0.051**,
+scenarios x 8 seeds, budget 32) the wasted-action rate is C0 0.762 > C1 0.263 >> **C2 0.044**,
 and on the compute-efficiency curve C2 dominates C1 at every budget.
 
 Sweeping `compute` as the primary variable enables fair comparison across generations and
@@ -277,9 +277,9 @@ graphs, Pareto frontiers).
 
 ## Included scenarios (from the misconfiguration catalog)
 
-The 14 scenarios span the full taxonomy — **all three axes are completely covered** (attack
+The 16 scenarios span the full taxonomy — **all three axes are completely covered** (attack
 phase 5/5, domain 4/4, misconfiguration kind 5/5, zero unused catalog entries) — and the
-**difficulty labels span L1-L4** (L1:2, L2:5, L3:5, L4:2). `validate` emits coverage and the
+**difficulty labels span L1-L4** (L1:2, L2:6, L3:6, L4:2), including two multi-cloud IAM scenarios (Azure managed-identity, GCP SA impersonation). `validate` emits coverage and the
 difficulty distribution as `taxonomy_coverage` (the RQ1 artifact). A representative subset:
 
 | ID | Chain | Domain | Difficulty | Primary misconfiguration |
@@ -374,7 +374,7 @@ cnab/
 │   ├── defense.py         # (5) defense synthesis + A/B + operational cost + cross/cumulative Pareto
 │   ├── runner.py          # evaluation-protocol orchestration
 │   └── cli.py             # command entry point
-├── scenarios/*.yaml       # (1) scenario definitions (14)
+├── scenarios/*.yaml       # (1) scenario definitions (16)
 ├── aws/                   # (2) real-cloud primary validation (Terraform disposable sandbox)
 ├── run_aws.py             # (2) real-AWS differential driver (measured IAM propagation latency)
 ├── k8s/                   # (5) K8s enforcement-latency measurement harnesses (measured:kind calibration)

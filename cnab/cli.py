@@ -27,10 +27,10 @@ from .agents import CONFIGS, MODEL_TIERS, make_reference_agent
 from .coverage import coverage_report
 from .attackgraph import (aggregate_graphs, evaluate, extract_from_trace,
                           ground_truth)
-from .defense import (cross_scenario_defense, cumulative_pareto,
-                      evaluate_policy, fleet_pareto, generate_policies,
-                      latency_calibration_report, load_defense_calibration,
-                      pareto_front, weight_sensitivity)
+from .defense import (alternative_mechanisms, cross_scenario_defense,
+                      cumulative_pareto, evaluate_policy, fleet_pareto,
+                      generate_policies, latency_calibration_report,
+                      load_defense_calibration, pareto_front, weight_sensitivity)
 from .fidelity import differential
 from .iac import to_deployment_plan
 from .logio import load_log, replay, write_log
@@ -255,6 +255,8 @@ def cmd_harden(args) -> None:
         "cumulative_tradeoff": curve,
         # Cop の重み感度分析（査読 §5: 重み・正規化が優先順位を左右しないことを示す）
         "weight_sensitivity": weight_sensitivity(fleet),
+        # eBPF ランタイムポリシー（Tetragon/KubeArmor）を代替/多層防御として提示（設計書6章候補）
+        "alternative_controls": alternative_mechanisms(),
     })
 
 

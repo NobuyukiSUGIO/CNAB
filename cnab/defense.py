@@ -89,6 +89,57 @@ MECHANISM_COST: dict[MisconfigKind, MechanismCost] = {
 }
 
 
+# ---- 代替（defense-in-depth）メカニズム: eBPF ランタイムポリシー（設計書 6章候補）------
+# 設計書は防御候補に「eBPF ランタイムポリシー（Cilium Tetragon / KubeArmor 系）」を挙げる。
+# 既定のフロンティアはデプロイ時制御（PodSecurity/Admission）を主機構として用いるが、
+# ノード脱出・特権に対しては実行時 syscall 強制を *代替/多層* 制御として別建てで価格付けする。
+# admission が「作成時」に弾くのに対し eBPF は「実行時」に syscall を監視・遮断するため、
+# レイテンシは eBPF fast-path で小さい一方、ワークロード別プロファイルの管理負荷は高い。
+# これらは実測前の文献ベース推定（provenance=estimate:literature）。既定フロンティアには
+# 影響させず、alternative_mechanisms() / harden 出力の alternative_controls で提示する。
+MECHANISM_ALTERNATIVES: dict[MisconfigKind, MechanismCost] = {
+    MisconfigKind.INSECURE_DEFAULT: MechanismCost(
+        "eBPF ランタイムポリシー（Tetragon/KubeArmor: 特権 syscall/実行の実行時強制）",
+        0.05, 0.10, 0.7,
+        latency_provenance="estimate:literature",
+        rejection_provenance="estimate:literature"),
+    MisconfigKind.IMPLICIT_PERMISSION: MechanismCost(
+        "eBPF ランタイムポリシー（Tetragon/KubeArmor: bind/escalate 実行時検知・遮断）",
+        0.05, 0.06, 0.7,
+        latency_provenance="estimate:literature",
+        rejection_provenance="estimate:literature"),
+}
+
+
+def alternative_mechanisms() -> list[dict]:
+    """設計書 6章の eBPF ランタイムポリシー候補を、代替/多層防御として価格付けして返す。
+
+    既定フロンティア（cross_scenario_defense）はデプロイ時制御を主機構に用いるため、
+    ここで返す代替は headline 数値に影響しない。各機構の運用コスト内訳・来歴を明示する。
+    """
+    out = []
+    for kind, alt in MECHANISM_ALTERNATIVES.items():
+        primary = MECHANISM_COST[kind]
+        out.append({
+            "misconfig_kind": kind.value,
+            "primary_mechanism": primary.mechanism,
+            "alternative_mechanism": alt.mechanism,
+            "enforcement_latency_ms": alt.enforcement_latency_ms,
+            "base_rejection_rate": alt.base_rejection_rate,
+            "management_burden": alt.management_burden,
+            "operational_cost": operational_cost(
+                alt.enforcement_latency_ms, alt.base_rejection_rate,
+                alt.management_burden),
+            "cost_components": cost_components(
+                alt.enforcement_latency_ms, alt.base_rejection_rate,
+                alt.management_burden),
+            "latency_provenance": alt.latency_provenance,
+            "rejection_provenance": alt.rejection_provenance,
+            "role": "defense-in-depth (runtime); primary is deploy-time",
+        })
+    return out
+
+
 def calibrate_mechanism_latency(measured_ms: dict, *,
                                 provenance: str = "measured") -> dict:
     """実測した施行レイテンシで MECHANISM_COST を較正する（設計書 6.13）。
