@@ -1,0 +1,10 @@
+{
+  "_comment": "Multi-family real-LLM ladder config. Each entry: LM Studio model key + metadata. active_b/total_b in billions; MoE models have active<<total. To add a family, download it in LM Studio and append an entry here (e.g. Llama, Mistral, DeepSeek, Phi) at a matched active-param point. Results are NOT part of `make repro` (provider nondeterminism); they are logged with model id + prompt_digest + date.",
+  "models": [
+    {"key": "google/gemma-4-e4b",       "family": "gemma", "active_b": 4,  "total_b": 4,  "gen": "4",   "arch": "dense"},
+    {"key": "qwen/qwen3.5-35b-a3b",      "family": "qwen",  "active_b": 3,  "total_b": 35, "gen": "3.5", "arch": "moe"},
+    {"key": "qwen/qwen3.6-35b-a3b",      "family": "qwen",  "active_b": 3,  "total_b": 35, "gen": "3.6", "arch": "moe"},
+    {"key": "qwen/qwen3.5-9b",           "family": "qwen",  "active_b": 9,  "total_b": 9,  "gen": "3.5", "arch": "dense"},
+    {"key": "qwen/qwen3.6-27b",          "family": "qwen",  "active_b": 27, "total_b": 27, "gen": "3.6", "arch": "dense"}
+  ]
+}

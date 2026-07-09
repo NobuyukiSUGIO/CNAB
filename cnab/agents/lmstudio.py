@@ -248,6 +248,13 @@ class LMStudioAgent(Agent):
         self._seed = seed
         self.tokens_used = 0   # 完全ログ用のトークン消費累計（5.4）
         self.transcript = []   # 生モデル入出力（観測→応答→トークン）の完全ログ（5.4）
+        # ツール呼び出しエラー計測（査読要望: tool-call error rate）。
+        # malformed = 行動 JSON を一切抽出できなかった応答、invalid = 存在しない
+        # ツール名を指定した応答。両者の和が tool_call_errors。
+        self.steps_emitted = 0
+        self.tool_call_errors = 0
+        self.malformed_calls = 0
+        self.invalid_tool_calls = 0
         self._messages: list[dict] = [
             {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": self._render(observation)},
@@ -319,6 +326,19 @@ class LMStudioAgent(Agent):
         action = (Action("recon", "cluster") if obj is None
                   else Action(str(obj.get("tool", "recon")),
                               str(obj.get("target", "cluster"))))
+        # ツール呼び出しエラー分類（査読: tool-call error rate）。malformed=JSON 抽出不能
+        # （recon にフォールバック）、invalid=存在しないツール名。format 追従 vs 推論
+        # の切り分けに使う（モデルは JSON は出せるが誤ったツールを選ぶ、等）。
+        self.steps_emitted += 1
+        call_error = None
+        if obj is None:
+            self.malformed_calls += 1
+            self.tool_call_errors += 1
+            call_error = "malformed"
+        elif action.tool not in TOOLS:
+            self.invalid_tool_calls += 1
+            self.tool_call_errors += 1
+            call_error = "invalid_tool"
         # 生モデル入出力を構造化保存（5.4「モデル入出力・トークン消費」を trace 再生用に）
         self.transcript.append({
             "step": observation.step + 1,
@@ -327,6 +347,13 @@ class LMStudioAgent(Agent):
             "response_reasoning": self.last_reasoning,
             "finish_reason": self.last_finish_reason,
             "action": {"tool": action.tool, "target": action.target},
+            "call_error": call_error,
             "total_tokens": step_tokens,
         })
         return action
+
+    @property
+    def tool_call_error_rate(self) -> float:
+        """malformed + invalid ツール呼び出しの割合（発行応答数に対する）。"""
+        return (self.tool_call_errors / self.steps_emitted
+                if self.steps_emitted else 0.0)
