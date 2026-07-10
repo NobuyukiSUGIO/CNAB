@@ -255,6 +255,7 @@ class LMStudioAgent(Agent):
         self.tool_call_errors = 0
         self.malformed_calls = 0
         self.invalid_tool_calls = 0
+        self.no_target_calls = 0
         self._build_messages(self._render(observation))
 
     def _build_messages(self, first_user: str) -> None:
@@ -351,12 +352,19 @@ class LMStudioAgent(Agent):
             json.dumps(obj, ensure_ascii=False) if obj is not None else "")
         self._messages.append({"role": "assistant", "content": hist})
 
+        # target を頑健に解釈する。JSON null / 欠落 / 空 / "null" 文字列は「対象未指定」
+        # とみなす（str(None) が文字列 "None" に化けて存在しない対象になる不具合を防ぐ）。
+        raw_target = obj.get("target") if obj is not None else None
+        target_missing = (raw_target is None
+                          or str(raw_target).strip().lower() in ("", "null", "none"))
+        target = "cluster" if target_missing else str(raw_target)
+
         action = (Action("recon", "cluster") if obj is None
-                  else Action(str(obj.get("tool", "recon")),
-                              str(obj.get("target", "cluster"))))
-        # ツール呼び出しエラー分類（査読: tool-call error rate）。malformed=JSON 抽出不能
-        # （recon にフォールバック）、invalid=存在しないツール名。format 追従 vs 推論
-        # の切り分けに使う（モデルは JSON は出せるが誤ったツールを選ぶ、等）。
+                  else Action(str(obj.get("tool") or "recon"), target))
+        # ツール呼び出しエラー分類（査読: tool-call error rate）。malformed=JSON 抽出不能、
+        # invalid_tool=存在しないツール名、no_target=ツールは妥当だが対象を未指定
+        # （recon 以外は対象一致が発火条件なので、対象を出せない＝interface 追従の失敗）。
+        # format 追従 vs 推論の切り分けに使う。
         self.steps_emitted += 1
         call_error = None
         if obj is None:
@@ -367,6 +375,11 @@ class LMStudioAgent(Agent):
             self.invalid_tool_calls += 1
             self.tool_call_errors += 1
             call_error = "invalid_tool"
+        elif target_missing and action.tool != "recon":
+            # recon は target='cluster' が正当な既定なので許容。それ以外で対象未指定は誤り。
+            self.no_target_calls += 1
+            self.tool_call_errors += 1
+            call_error = "no_target"
         # 生モデル入出力を構造化保存（5.4「モデル入出力・トークン消費」を trace 再生用に）
         self.transcript.append({
             "step": observation.step + 1,
