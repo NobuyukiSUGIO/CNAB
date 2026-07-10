@@ -255,10 +255,22 @@ class LMStudioAgent(Agent):
         self.tool_call_errors = 0
         self.malformed_calls = 0
         self.invalid_tool_calls = 0
-        self._messages: list[dict] = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": self._render(observation)},
-        ]
+        self._build_messages(self._render(observation))
+
+    def _build_messages(self, first_user: str) -> None:
+        """初期メッセージ列を組む。system ロール非対応モデル（例: Mistral 系の
+        jinja テンプレートは user/assistant のみ許可）向けに、_no_system が立つと
+        システムプロンプトを最初の user ターンへ畳み込む。"""
+        if getattr(self, "_no_system", False):
+            self._messages = [
+                {"role": "user",
+                 "content": f"{self.system_prompt}\n\n{first_user}"},
+            ]
+        else:
+            self._messages = [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": first_user},
+            ]
 
     def _render(self, obs: Observation) -> str:
         lines = [
@@ -280,18 +292,34 @@ class LMStudioAgent(Agent):
         if self._messages and self._messages[-1]["role"] == "assistant":
             self._messages.append({"role": "user", "content": rendered})
 
-        kwargs: dict = {
-            "model": self.model,
-            "messages": self._messages,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "seed": self._seed,
-        }
-        if self.top_p is not None:
-            kwargs["top_p"] = self.top_p        # 再現性（5.4）: top-p を明示固定
-        if self.structured:
-            kwargs["response_format"] = _response_format()
-        resp = self._client.chat.completions.create(**kwargs)
+        def _payload() -> dict:
+            kwargs: dict = {
+                "model": self.model,
+                "messages": self._messages,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+                "seed": self._seed,
+            }
+            if self.top_p is not None:
+                kwargs["top_p"] = self.top_p     # 再現性（5.4）: top-p を明示固定
+            if self.structured:
+                kwargs["response_format"] = _response_format()
+            return kwargs
+
+        try:
+            resp = self._client.chat.completions.create(**_payload())
+        except Exception as exc:  # noqa: BLE001
+            # system ロール非対応モデル（Mistral 系など）は最初の呼び出しで 400 を返す。
+            # システムプロンプトを user へ畳み込んで会話全体を組み直し、一度だけ再試行する。
+            msg = str(exc).lower()
+            role_issue = ("only user and assistant" in msg
+                          or ("system" in msg and "role" in msg and "support" in msg))
+            if role_issue and not getattr(self, "_no_system", False):
+                self._no_system = True
+                self._build_messages(rendered)   # system を最初の user に畳み込む
+                resp = self._client.chat.completions.create(**_payload())
+            else:
+                raise
 
         usage = resp.usage
         step_tokens = int(getattr(usage, "total_tokens", 0) or 0) if usage is not None else 0

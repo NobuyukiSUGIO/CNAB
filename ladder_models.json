@@ -1,10 +1,88 @@
 {
-  "_comment": "Multi-family real-LLM ladder config. Each entry: LM Studio model key + metadata. active_b/total_b in billions; MoE models have active<<total. To add a family, download it in LM Studio and append an entry here (e.g. Llama, Mistral, DeepSeek, Phi) at a matched active-param point. Results are NOT part of `make repro` (provider nondeterminism); they are logged with model id + prompt_digest + date.",
+  "_comment": "Multi-family real-LLM ladder config for run_multifamily_ladder.py. Each entry: LM Studio model key + metadata (active_b/total_b in billions; MoE/MatFormer have active<<total). The set forms a matched 3-tier x 3-family grid so the 'active params, not total' effect can be tested ACROSS families: (a) low-active MoE ~2.4-4B {deepseek, qwen, gemma}, (b) dense 7-9B {mistral, llama, qwen}, (c) dense 24-27B {mistral, qwen, gemma}. Scope is multi-FAMILY open-weights (Q4_K_M, one 24GB GPU), NOT multi-VENDOR frontier (Claude/GPT/Gemini needs API; future work). Results are logged with model id+prompt_digest+date and are NOT part of `make repro` (provider nondeterminism).",
+  "_key_note": "On-disk keys confirmed from `lms ls`: meta-llama-3.1-8b-instruct, mistral-7b-instruct-v0.3, mistral-small-24b-instruct-2501. gemma-2-27b-it and deepseek-v2-lite-chat downloads in progress; verify exact keys with `lms ls` before running. DeepSeek is Q4_K_S (second-state repo); all others Q4_K_M.",
+  "_quantization": "Q4_K_M for all except deepseek-v2-lite-chat (Q4_K_S, only variant resolvable via a non-gated repo); noted per-entry where it differs.",
   "models": [
-    {"key": "google/gemma-4-e4b",       "family": "gemma", "active_b": 4,  "total_b": 4,  "gen": "4",   "arch": "dense"},
-    {"key": "qwen/qwen3.5-35b-a3b",      "family": "qwen",  "active_b": 3,  "total_b": 35, "gen": "3.5", "arch": "moe"},
-    {"key": "qwen/qwen3.6-35b-a3b",      "family": "qwen",  "active_b": 3,  "total_b": 35, "gen": "3.6", "arch": "moe"},
-    {"key": "qwen/qwen3.5-9b",           "family": "qwen",  "active_b": 9,  "total_b": 9,  "gen": "3.5", "arch": "dense"},
-    {"key": "qwen/qwen3.6-27b",          "family": "qwen",  "active_b": 27, "total_b": 27, "gen": "3.6", "arch": "dense"}
+    {
+      "key": "deepseek-v2-lite-chat",
+      "family": "deepseek",
+      "active_b": 2.4,
+      "total_b": 16,
+      "gen": "v2",
+      "arch": "moe",
+      "quant": "Q4_K_S"
+    },
+    {
+      "key": "qwen/qwen3.5-35b-a3b",
+      "family": "qwen",
+      "active_b": 3,
+      "total_b": 35,
+      "gen": "3.5",
+      "arch": "moe"
+    },
+    {
+      "key": "qwen/qwen3.6-35b-a3b",
+      "family": "qwen",
+      "active_b": 3,
+      "total_b": 35,
+      "gen": "3.6",
+      "arch": "moe"
+    },
+    {
+      "key": "google/gemma-4-e4b",
+      "family": "gemma",
+      "active_b": 4,
+      "total_b": 8,
+      "gen": "4",
+      "arch": "matformer"
+    },
+    {
+      "key": "mistral-7b-instruct-v0.3",
+      "family": "mistral",
+      "active_b": 7,
+      "total_b": 7,
+      "gen": "0.3",
+      "arch": "dense"
+    },
+    {
+      "key": "meta-llama-3.1-8b-instruct",
+      "family": "llama",
+      "active_b": 8,
+      "total_b": 8,
+      "gen": "3.1",
+      "arch": "dense"
+    },
+    {
+      "key": "qwen/qwen3.5-9b",
+      "family": "qwen",
+      "active_b": 9,
+      "total_b": 9,
+      "gen": "3.5",
+      "arch": "dense"
+    },
+    {
+      "key": "mistral-small-24b-instruct-2501",
+      "family": "mistral",
+      "active_b": 24,
+      "total_b": 24,
+      "gen": "3(2501)",
+      "arch": "dense"
+    },
+    {
+      "key": "qwen/qwen3.6-27b",
+      "family": "qwen",
+      "active_b": 27,
+      "total_b": 27,
+      "gen": "3.6",
+      "arch": "dense"
+    },
+    {
+      "key": "gemma-2-27b-it",
+      "family": "gemma",
+      "active_b": 27,
+      "total_b": 27,
+      "gen": "2",
+      "arch": "dense"
+    }
   ]
 }
