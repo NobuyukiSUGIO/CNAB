@@ -26,3 +26,6 @@ aws/terraform.tfstate.*
 aws/*.tfstate
 aws/*.tfstate.*
 aws/*.zip
+
+# Verbose LLM-sweep progress logs (data is in the .json)
+results/multifamily_*.log
