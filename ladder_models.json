@@ -10,7 +10,9 @@
       "total_b": 16,
       "gen": "v2",
       "arch": "moe",
-      "quant": "Q4_K_S"
+      "quant": "Q4_K_S",
+      "available": false,
+      "note": "downloaded (curl) but not registrable via LM Studio CLI in headless env; import via GUI to enable"
     },
     {
       "key": "qwen/qwen3.5-35b-a3b",
@@ -18,7 +20,8 @@
       "active_b": 3,
       "total_b": 35,
       "gen": "3.5",
-      "arch": "moe"
+      "arch": "moe",
+      "available": true
     },
     {
       "key": "qwen/qwen3.6-35b-a3b",
@@ -26,7 +29,8 @@
       "active_b": 3,
       "total_b": 35,
       "gen": "3.6",
-      "arch": "moe"
+      "arch": "moe",
+      "available": true
     },
     {
       "key": "google/gemma-4-e4b",
@@ -34,7 +38,8 @@
       "active_b": 4,
       "total_b": 8,
       "gen": "4",
-      "arch": "matformer"
+      "arch": "matformer",
+      "available": true
     },
     {
       "key": "mistral-7b-instruct-v0.3",
@@ -42,7 +47,8 @@
       "active_b": 7,
       "total_b": 7,
       "gen": "0.3",
-      "arch": "dense"
+      "arch": "dense",
+      "available": true
     },
     {
       "key": "meta-llama-3.1-8b-instruct",
@@ -50,7 +56,8 @@
       "active_b": 8,
       "total_b": 8,
       "gen": "3.1",
-      "arch": "dense"
+      "arch": "dense",
+      "available": true
     },
     {
       "key": "qwen/qwen3.5-9b",
@@ -58,7 +65,8 @@
       "active_b": 9,
       "total_b": 9,
       "gen": "3.5",
-      "arch": "dense"
+      "arch": "dense",
+      "available": true
     },
     {
       "key": "mistral-small-24b-instruct-2501",
@@ -66,7 +74,8 @@
       "active_b": 24,
       "total_b": 24,
       "gen": "3(2501)",
-      "arch": "dense"
+      "arch": "dense",
+      "available": true
     },
     {
       "key": "qwen/qwen3.6-27b",
@@ -74,7 +83,8 @@
       "active_b": 27,
       "total_b": 27,
       "gen": "3.6",
-      "arch": "dense"
+      "arch": "dense",
+      "available": true
     },
     {
       "key": "gemma-2-27b-it",
@@ -82,7 +92,10 @@
       "active_b": 27,
       "total_b": 27,
       "gen": "2",
-      "arch": "dense"
+      "arch": "dense",
+      "available": false,
+      "note": "downloaded (curl) but not registrable via LM Studio CLI in headless env; import via GUI to enable"
     }
-  ]
+  ],
+  "_status": "8 of 10 models registered and evaluated (see results/MULTIFAMILY_LADDER.md). gemma-2-27b-it and deepseek-v2-lite-chat were downloaded but the LM Studio CLI importer hangs headless; enable them via the LM Studio GUI (My Models -> import) then set available=true."
 }

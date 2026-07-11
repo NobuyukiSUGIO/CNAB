@@ -1,0 +1,37 @@
+
+=== loading qwen/qwen3.5-35b-a3b (active=3B/35B qwen moe) ===
+  T=0.0  pass@k=0.83 pass-all@k=0.83 reach=0.833 ASR=0.83 tool-err=0.010 wasted=6.3 tok=21091  (502s)
+
+=== loading qwen/qwen3.6-35b-a3b (active=3B/35B qwen moe) ===
+  T=0.0  pass@k=0.67 pass-all@k=0.67 reach=0.833 ASR=0.67 tool-err=0.525 wasted=6.2 tok=25455  (902s)
+
+=== loading google/gemma-4-e4b (active=4B/8B gemma matformer) ===
+  T=0.0  pass@k=0.67 pass-all@k=0.50 reach=0.708 ASR=0.56 tool-err=0.439 wasted=9.3 tok=34975  (1248s)
+
+=== loading mistral-7b-instruct-v0.3 (active=7B/7B mistral dense) ===
+  T=0.0  pass@k=0.00 pass-all@k=0.00 reach=0.162 ASR=0.00 tool-err=0.445 wasted=19.4 tok=66395  (121s)
+
+=== loading meta-llama-3.1-8b-instruct (active=8B/8B llama dense) ===
+  T=0.0  pass@k=0.33 pass-all@k=0.17 reach=0.343 ASR=0.28 tool-err=0.096 wasted=16.0 tok=40430  (70s)
+
+=== loading qwen/qwen3.5-9b (active=9B/9B qwen dense) ===
+  T=0.0  pass@k=0.67 pass-all@k=0.67 reach=0.708 ASR=0.67 tool-err=0.026 wasted=8.7 tok=28153  (860s)
+
+=== loading mistral-small-24b-instruct-2501 (active=24B/24B mistral dense) ===
+  T=0.0  pass@k=0.50 pass-all@k=0.50 reach=0.667 ASR=0.50 tool-err=0.336 wasted=9.3 tok=28439  (109s)
+
+=== loading qwen/qwen3.6-27b (active=27B/27B qwen dense) ===
+  T=0.0  pass@k=1.00 pass-all@k=1.00 reach=1.000 ASR=1.00 tool-err=0.264 wasted=0.0 tok=6299  (1031s)
+
+===== MULTI-FAMILY LADDER  T=0.0  scaffold=interface budget=20 K=3 =====
+model                  family act   gen  pass@k   pass-all@k  reach  tool-err wasted 
+qwen3.5-35b-a3b        qwen   3B    3.5  0.83     0.83        0.833  0.010    6.3    
+qwen3.6-35b-a3b        qwen   3B    3.6  0.67     0.67        0.833  0.525    6.2    
+gemma-4-e4b            gemma  4B    4    0.67     0.50        0.708  0.439    9.3    
+mistral-7b-instruct-v0.3 mistral 7B    0.3  0.00     0.00        0.162  0.445    19.4   
+meta-llama-3.1-8b-instruct llama  8B    3.1  0.33     0.17        0.343  0.096    16.0   
+qwen3.5-9b             qwen   9B    3.5  0.67     0.67        0.708  0.026    8.7    
+mistral-small-24b-instruct-2501 mistral 24B   3(2501) 0.50     0.50        0.667  0.336    9.3    
+qwen3.6-27b            qwen   27B   3.6  1.00     1.00        1.000  0.264    0.0    
+
+[saved] results/multifamily_pilot.json
