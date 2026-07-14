@@ -1,0 +1,135 @@
+{
+  "_note": "Model manifest for the multi-family real-LLM ladder (review \u00a7concern 6). Open-weights, 4-bit; provider/runtime nondeterminism means this is NOT part of `make repro`, but the exact model identity, quantization, runtime, and decoding settings are pinned here so a third party can reproduce the setup.",
+  "runtime": {
+    "engine": "LM Studio (llama.cpp backend)",
+    "version": "0.4.18",
+    "endpoint": "OpenAI-compatible http://localhost:1234/v1",
+    "load_flags": "--gpu max --context-length 16384 --parallel 1",
+    "gpu": "NVIDIA GeForce RTX 3090 Ti (24 GB)",
+    "os": "Linux 6.8"
+  },
+  "decoding": {
+    "temperatures": [
+      0.0,
+      0.7
+    ],
+    "top_p": 1.0,
+    "max_generation_tokens": 512,
+    "seeds_per_config": 5,
+    "note": "T=0 is greedy/deterministic within a build; seeds vary scenario-side name/candidate ordering, not decoding. Open-weights 4-bit inference is not guaranteed bitwise-reproducible across driver/build, hence excluded from make repro."
+  },
+  "prompt_digest": "sha256:3af57beb08e394ce32abc11e8eb7e8107d3e04530cd62ea86162f3e2405780ec",
+  "scaffold": "interface",
+  "models": [
+    {
+      "key": "deepseek-v2-lite-chat",
+      "family": "deepseek",
+      "active_b": 2.4,
+      "total_b": 16,
+      "generation": "v2",
+      "arch": "moe",
+      "quantization": "Q4_K_S",
+      "gguf_repo": "second-state/DeepSeek-V2-Lite-Chat-GGUF",
+      "gguf_sha256": "07e8cde8c7f2baa606bc58d7470739a962113b94a75efaed10d626a071461f4e"
+    },
+    {
+      "key": "qwen/qwen3.5-35b-a3b",
+      "family": "qwen",
+      "active_b": 3,
+      "total_b": 35,
+      "generation": "3.5",
+      "arch": "moe",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Qwen3.5-35B-A3B-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "qwen/qwen3.6-35b-a3b",
+      "family": "qwen",
+      "active_b": 3,
+      "total_b": 35,
+      "generation": "3.6",
+      "arch": "moe",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Qwen3.6-35B-A3B-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "google/gemma-4-e4b",
+      "family": "gemma",
+      "active_b": 4,
+      "total_b": 8,
+      "generation": "4",
+      "arch": "matformer",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/gemma-4-E4B-it-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "mistral-7b-instruct-v0.3",
+      "family": "mistral",
+      "active_b": 7,
+      "total_b": 7,
+      "generation": "0.3",
+      "arch": "dense",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Mistral-7B-Instruct-v0.3-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "meta-llama-3.1-8b-instruct",
+      "family": "llama",
+      "active_b": 8,
+      "total_b": 8,
+      "generation": "3.1",
+      "arch": "dense",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "qwen/qwen3.5-9b",
+      "family": "qwen",
+      "active_b": 9,
+      "total_b": 9,
+      "generation": "3.5",
+      "arch": "dense",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Qwen3.5-9B-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "mistral-small-24b-instruct-2501",
+      "family": "mistral",
+      "active_b": 24,
+      "total_b": 24,
+      "generation": "3(2501)",
+      "arch": "dense",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Mistral-Small-24B-Instruct-2501-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "qwen/qwen3.6-27b",
+      "family": "qwen",
+      "active_b": 27,
+      "total_b": 27,
+      "generation": "3.6",
+      "arch": "dense",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/Qwen3.6-27B-GGUF",
+      "gguf_sha256": "(publisher hash; verify via lms)"
+    },
+    {
+      "key": "gemma-2-27b-it",
+      "family": "gemma",
+      "active_b": 27,
+      "total_b": 27,
+      "generation": "2",
+      "arch": "dense",
+      "quantization": "Q4_K_M",
+      "gguf_repo": "lmstudio-community/gemma-2-27b-it-GGUF",
+      "gguf_sha256": "69a0cdba2bc2e56d8298a9330f2a050ebecd657ed315beb3e51ae427b224dbc7"
+    }
+  ]
+}
