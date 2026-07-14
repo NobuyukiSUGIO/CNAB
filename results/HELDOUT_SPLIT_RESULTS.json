@@ -1,0 +1,74 @@
+{
+  "dev": {
+    "C0": {
+      "asr": 0.8125,
+      "reach": 0.9323,
+      "wasted": 0.7465,
+      "n_scenarios": 8
+    },
+    "C1": {
+      "asr": 1.0,
+      "reach": 1.0,
+      "wasted": 0.2906,
+      "n_scenarios": 8
+    },
+    "C2": {
+      "asr": 1.0,
+      "reach": 1.0,
+      "wasted": 0.0377,
+      "n_scenarios": 8
+    },
+    "_reach_at_budget4": {
+      "C1": 0.7786,
+      "C2": 0.9219
+    }
+  },
+  "eval": {
+    "C0": {
+      "asr": 0.75,
+      "reach": 0.918,
+      "wasted": 0.7768,
+      "n_scenarios": 8
+    },
+    "C1": {
+      "asr": 1.0,
+      "reach": 1.0,
+      "wasted": 0.2351,
+      "n_scenarios": 8
+    },
+    "C2": {
+      "asr": 1.0,
+      "reach": 1.0,
+      "wasted": 0.051,
+      "n_scenarios": 8
+    },
+    "_reach_at_budget4": {
+      "C1": 0.8125,
+      "C2": 0.9883
+    }
+  },
+  "all": {
+    "C0": {
+      "asr": 0.7812,
+      "reach": 0.9251,
+      "wasted": 0.7617,
+      "n_scenarios": 16
+    },
+    "C1": {
+      "asr": 1.0,
+      "reach": 1.0,
+      "wasted": 0.2629,
+      "n_scenarios": 16
+    },
+    "C2": {
+      "asr": 1.0,
+      "reach": 1.0,
+      "wasted": 0.0444,
+      "n_scenarios": 16
+    },
+    "_reach_at_budget4": {
+      "C1": 0.7956,
+      "C2": 0.9551
+    }
+  }
+}

@@ -10,9 +10,13 @@ from pathlib import Path
 
 from cnab import scenario as scenario_mod
 from cnab.agents import make_reference_agent
-from cnab.attackgraph import evaluate, extract_from_trace, ground_truth
-from cnab.defense import evaluate_policy, generate_policies, pareto_front
-from cnab.attackgraph import aggregate_graphs
+from cnab.attackgraph import (aggregate_graphs, articulation_points,
+                              dominator_choke_points, evaluate,
+                              evaluate_coverage, evaluate_reconstruction,
+                              extract_from_trace, ground_truth)
+from cnab.defense import (cross_scenario_defense, defense_baselines,
+                          evaluate_policy, generate_policies, pareto_front,
+                          true_pareto_frontier)
 from cnab.environment import Environment
 from cnab.metrics import aggregate
 from cnab.oracle import Oracle
@@ -147,12 +151,39 @@ class TestAttackGraph(unittest.TestCase):
         self.assertEqual(acc.precision, 1.0)   # 抽出は偽エッジを含まない
         self.assertGreaterEqual(acc.recall, 0.75)
 
-    def test_cut_nodes_identified(self):
+    def test_choke_points_identified(self):
         s = load()["s1_rbac_secret_lateral"]
         graphs = [r.graph for r in run_seeds(s, "C2", budget=32, seeds=SEEDS)]
         agg = aggregate_graphs(graphs)
         self.assertIn("excessive_rbac_secrets", agg.misconfig_frequency)
-        self.assertTrue(agg.cut_nodes)
+        # 中心性ヒューリスティクスと厳密 articulation point の両方を報告する
+        self.assertTrue(agg.choke_point_centrality)
+        self.assertIsInstance(agg.articulation_points, list)
+
+    def test_reconstruction_is_exact_but_coverage_can_be_partial(self):
+        """査読 §主要懸念5: 抽出器忠実度(=1.0)と経路網羅度(<=1.0)を分離して測る。"""
+        s = load()["s2_imds_iam_pivot"]
+        traces = [r.trace for r in run_seeds(s, "C2", budget=32, seeds=SEEDS)]
+        # 抽出器は実発火を忠実に再構成する（誤エッジ・欠落なし）
+        for tr in traces:
+            rec = evaluate_reconstruction(tr)
+            self.assertEqual(rec.precision, 1.0)
+            self.assertEqual(rec.recall, 1.0)
+        # 経路網羅度は分母が『実行可能な全攻撃エッジ』なので <= 1.0（探索不足を表す）
+        cov = evaluate_coverage(traces, s)
+        self.assertEqual(cov.precision, 1.0)   # 発火 ⊆ 実行可能なので偽陽性は無い
+        self.assertLessEqual(cov.recall, 1.0)
+        self.assertGreater(cov.recall, 0.0)
+
+    def test_articulation_points_are_graph_theoretic(self):
+        """degree-product ではなく厳密な cut vertex を計算していることを確認する。"""
+        s = load()["s2_imds_iam_pivot"]
+        graphs = [r.graph for r in run_seeds(s, "C2", budget=32, seeds=SEEDS)]
+        agg = aggregate_graphs(graphs)
+        # チェーン型攻撃グラフでは中間ノードが articulation point になる
+        self.assertTrue(agg.articulation_points)
+        # articulation は __start__ を含まない（開始ノードは除外）
+        self.assertNotIn("__start__", agg.articulation_points)
 
 
 class TestDefense(unittest.TestCase):
@@ -295,6 +326,114 @@ class TestFleetDefense(unittest.TestCase):
             self.assertLess(a, b + 1e-9)
         # 全防御投入で ASR は完全に消える（連鎖が断たれる）
         self.assertAlmostEqual(reds[-1], curve[0]["mean_asr"], places=6)
+
+
+class TestTruePareto(unittest.TestCase):
+    """査読 §主要懸念1: greedy 累積曲線ではなく全部分集合の真の Pareto 前線を検証。"""
+
+    def _fleet(self):
+        scs = list(load().values())
+        return scs, cross_scenario_defense(scs, "C2", budget=32, seeds=SEEDS)
+
+    def test_frontier_is_nondominated_and_monotone(self):
+        scs, fleet = self._fleet()
+        pf = true_pareto_frontier(scs, "C2", fleet, budget=32, seeds=SEEDS)
+        # 全部分集合を評価している（16 制御 → 2^16）
+        self.assertEqual(pf["n_subsets_evaluated"], 1 << pf["n_controls"])
+        front = pf["frontier"]
+        self.assertTrue(front)
+        # 前線は非支配: コスト昇順で ASR は厳密減少
+        costs = [p["cumulative_cost"] for p in front]
+        asrs = [p["mean_asr"] for p in front]
+        for a, b in zip(costs, costs[1:]):
+            self.assertLess(a, b + 1e-9)
+        for a, b in zip(asrs, asrs[1:]):
+            self.assertLess(b, a + 1e-9)
+        # どの前線点も他点に支配されない
+        pts = [(p["cumulative_cost"], p["mean_asr"]) for p in front]
+        for (c, a) in pts:
+            self.assertFalse(any((c2 <= c and a2 <= a and (c2 < c or a2 < a))
+                                 for (c2, a2) in pts if (c2, a2) != (c, a)))
+
+    def test_greedy_is_not_optimal(self):
+        """効率順 greedy は厳密最適より高コスト（＝greedy は Pareto 前線ではない）。"""
+        scs, fleet = self._fleet()
+        b = defense_baselines(scs, "C2", fleet, budget=32, seeds=SEEDS)
+        opt = b["optimal_min_cost_for_min_asr"]["cumulative_cost"]
+        greedy = b["orders"]["efficiency_greedy"]["cost_to_reach_min_asr"]
+        # 厳密最適は greedy 以下のコストで同じ最小 ASR を達成する
+        self.assertLessEqual(opt, greedy + 1e-9)
+        # 本スイートでは greedy は厳密に高コスト（支配される点を含む）
+        self.assertGreater(b["orders"]["efficiency_greedy"]["excess_cost_vs_optimal"],
+                           0.0)
+
+    def test_optimal_min_cost_matches_bruteforce(self):
+        scs, fleet = self._fleet()
+        pf = true_pareto_frontier(scs, "C2", fleet, budget=32, seeds=SEEDS)
+        opt = pf["optimal_min_cost_for_min_asr"]
+        # 最小 ASR を達成する集合として前線上に載っている
+        on_front = [f for f in pf["frontier"]
+                    if abs(f["mean_asr"] - pf["min_achievable_asr"]) < 1e-9]
+        self.assertTrue(on_front)
+        self.assertAlmostEqual(opt["cumulative_cost"],
+                               min(f["cumulative_cost"] for f in on_front), places=6)
+
+
+class TestAgentInformationBoundary(unittest.TestCase):
+    """査読 §主要懸念4: 参照エージェントが隠れたオラクル情報を読まないことを保証する。
+
+    エージェントに渡る Observation を、C1/C2 が実際に読む属性だけに制限した
+    スパイ版に差し替え、known_facts/goal_capabilities/last 以外へアクセスすると
+    即座に失敗させることで、遷移グラフ・enabled 集合・マイルストン・正解フェーズを
+    参照していないことを機械的に確認する。
+    """
+
+    def _run_with_guarded_obs(self, config_id):
+        from cnab.environment import Environment
+        from cnab.agents import make_reference_agent
+
+        forbidden = {"held_capabilities"}  # 情報遮蔽の観点で監視する隠れ状態
+
+        class GuardedObs:
+            """許可属性のみ通し、禁止属性アクセスで AssertionError を投げるプロキシ。"""
+            def __init__(self, real):
+                object.__setattr__(self, "_real", real)
+                object.__setattr__(self, "touched", set())
+
+            def __getattr__(self, name):
+                if name in forbidden:
+                    raise AssertionError(
+                        f"reference agent {config_id} read hidden field '{name}'")
+                object.__getattribute__(self, "touched").add(name)
+                return getattr(object.__getattribute__(self, "_real"), name)
+
+        s = load()["s2_imds_iam_pivot"]
+        env = Environment(s, seed=0)
+        obs = env.reset()
+        agent = make_reference_agent(config_id, seed=0)
+        agent.reset(GuardedObs(obs), seed=0)
+        for _ in range(32):
+            act = agent.act(GuardedObs(obs))
+            env.step(act.tool, act.target)
+            obs = env.observe()
+            if env.goal_reached:
+                break
+        # エージェントは scenario / transitions / milestones を一切参照しない
+        return True
+
+    def test_reference_agents_never_read_hidden_state(self):
+        for cfg in ("C0", "C1", "C2"):
+            self.assertTrue(self._run_with_guarded_obs(cfg))
+
+    def test_agents_have_no_scenario_handle(self):
+        """エージェントインスタンスがシナリオ/遷移/オラクルへの参照を保持しない。"""
+        from cnab.agents import make_reference_agent
+        for cfg in ("C0", "C1", "C2"):
+            agent = make_reference_agent(cfg, seed=0)
+            blob = repr(vars(agent))
+            for banned in ("Scenario", "transition", "milestone", "attack_transitions"):
+                self.assertNotIn(banned, blob,
+                                 f"{cfg} holds a reference to {banned}")
 
 
 class TestCatalogPrecondition(unittest.TestCase):

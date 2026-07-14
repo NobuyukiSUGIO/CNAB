@@ -25,12 +25,14 @@ from pathlib import Path
 from . import scenario as scenario_mod
 from .agents import CONFIGS, MODEL_TIERS, make_reference_agent
 from .coverage import coverage_report
-from .attackgraph import (aggregate_graphs, evaluate, extract_from_trace,
+from .attackgraph import (aggregate_graphs, evaluate, evaluate_coverage,
+                          evaluate_reconstruction, extract_from_trace,
                           ground_truth)
 from .defense import (alternative_mechanisms, cross_scenario_defense,
-                      cumulative_pareto, evaluate_policy, fleet_pareto,
-                      generate_policies, latency_calibration_report,
-                      load_defense_calibration, pareto_front, weight_sensitivity)
+                      cumulative_pareto, defense_baselines, evaluate_policy,
+                      fleet_pareto, generate_policies, latency_calibration_report,
+                      load_defense_calibration, pareto_front,
+                      true_pareto_frontier, weight_sensitivity)
 from .fidelity import differential
 from .iac import to_deployment_plan
 from .logio import load_log, replay, write_log
@@ -187,22 +189,38 @@ def cmd_graph(args) -> None:
         seeds = _ints(args.seeds)
         graphs = []
         accs = []
+        recon = []
+        traces = []
         truth = ground_truth(s)
         for cfg in (args.configs.split(",") if args.configs else list(CONFIGS)):
             for res in run_seeds(s, cfg, budget=args.budget, seeds=seeds):
                 g = res.graph
                 graphs.append(g)
+                traces.append(res.trace)
+                # 複合指標（従来）: 抽出器 vs 実行可能全経路
                 accs.append(evaluate(g, truth).as_dict())
+                # 分離指標1: 抽出器忠実度（抽出 vs 実発火）— 査読 §主要懸念5
+                recon.append(evaluate_reconstruction(res.trace).as_dict())
         agg = aggregate_graphs(graphs)
-        # 平均 precision/recall
         n = len(accs) or 1
         mean_acc = {
             k: round(sum(a[k] for a in accs) / n, 4)
             for k in ("precision", "recall", "f1")
         }
+        mean_recon = {
+            k: round(sum(a[k] for a in recon) / n, 4)
+            for k in ("precision", "recall", "f1")
+        }
+        # 分離指標2: 経路網羅度（実発火の和集合 vs 実行可能全攻撃経路）— 査読 §主要懸念5
+        coverage = evaluate_coverage(traces, s).as_dict()
         out.append({
             "scenario": s.id,
-            "extraction_accuracy_mean": mean_acc,
+            # 複合（従来 precision/recall）: 抽出器忠実度と網羅度を合成した値。参考。
+            "extraction_accuracy_mean_composite": mean_acc,
+            # 抽出器そのものの正確さ（エージェント探索と独立, ~1.0 期待）
+            "reconstruction_accuracy_mean": mean_recon,
+            # エージェントの経路網羅度（recall が本質。alternate path 未探索で <1）
+            "path_coverage": coverage,
             "aggregated_graph": agg.as_dict(),
         })
     _print(out)
@@ -245,6 +263,12 @@ def cmd_harden(args) -> None:
     front = fleet_pareto(fleet)
     curve = cumulative_pareto(scenarios, args.config, fleet, budget=args.budget,
                               seeds=seeds)
+    # 真の Pareto 前線（全 2^n 部分集合の非支配点）と厳密最適（査読 §主要懸念1）。
+    true_front = true_pareto_frontier(scenarios, args.config, fleet,
+                                      budget=args.budget, seeds=seeds)
+    # 制御追加順序のベースライン比較（greedy/frequency/cost/random vs 厳密最適）。
+    baselines = defense_baselines(scenarios, args.config, fleet,
+                                  budget=args.budget, seeds=seeds)
     _print({
         "config": args.config,
         "n_scenarios": len(scenarios),
@@ -252,7 +276,12 @@ def cmd_harden(args) -> None:
         "latency_calibration": latency_calibration_report(),
         "fleet_defense": [f.as_dict() for f in fleet],
         "fleet_pareto_front": [f.as_dict() for f in front],
-        "cumulative_tradeoff": curve,
+        # greedy 累積曲線（単一制御を効率順に投入）。これは *前線ではない*（下記参照）。
+        "greedy_cumulative_curve": curve,
+        # 真の Pareto 前線: 全部分集合の非支配点＋所定 ASR の最小コスト集合（厳密最適）
+        "true_pareto_frontier": true_front,
+        # 順序ベースライン比較（greedy が最適から何割超過するか）
+        "ordering_baselines": baselines,
         # Cop の重み感度分析（査読 §5: 重み・正規化が優先順位を左右しないことを示す）
         "weight_sensitivity": weight_sensitivity(fleet),
         # eBPF ランタイムポリシー（Tetragon/KubeArmor）を代替/多層防御として提示（設計書6章候補）

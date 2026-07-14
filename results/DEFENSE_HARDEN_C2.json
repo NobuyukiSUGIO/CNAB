@@ -1,0 +1,2392 @@
+{
+  "config": "C2",
+  "n_scenarios": 16,
+  "latency_calibration": [
+    {
+      "misconfig_kind": "over_permission",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "enforcement_latency_ms": 0.0,
+      "latency_provenance": "measured:aws",
+      "base_rejection_rate": 0.05,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.105
+    },
+    {
+      "misconfig_kind": "credential_mismgmt",
+      "mechanism": "Secrets 外部化 + 平文資格情報除去",
+      "enforcement_latency_ms": 0.0,
+      "latency_provenance": "measured:aws",
+      "base_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.07
+    },
+    {
+      "misconfig_kind": "implicit_permission",
+      "mechanism": "Admission 制約（bind/escalate 禁止）",
+      "enforcement_latency_ms": 0.278,
+      "latency_provenance": "measured:eks",
+      "base_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.1117
+    },
+    {
+      "misconfig_kind": "isolation_gap",
+      "mechanism": "NetworkPolicy 既定拒否 + メタデータ露出遮断",
+      "enforcement_latency_ms": 0.0,
+      "latency_provenance": "measured:eks",
+      "base_rejection_rate": 0.1,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.15
+    },
+    {
+      "misconfig_kind": "insecure_default",
+      "mechanism": "PodSecurity/eBPF ランタイムポリシー（特権禁止）",
+      "enforcement_latency_ms": 0.278,
+      "latency_provenance": "measured:eks",
+      "base_rejection_rate": 0.08,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.1617
+    }
+  ],
+  "fleet_defense": [
+    {
+      "misconfig": "plaintext_creds_env",
+      "mechanism": "Secrets 外部化 + 平文資格情報除去",
+      "n_scenarios": 3,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 5,
+      "max_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.07,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.01,
+        "burden": 0.06
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.3,
+      "efficiency": 14.286,
+      "blocked_paths": [
+        {
+          "scenario": "s12_serverless_plaintext_creds",
+          "transition": "t_search",
+          "action": "search_creds",
+          "benign": false
+        },
+        {
+          "scenario": "s5_plaintext_creds_datastore",
+          "transition": "t_creds",
+          "action": "search_creds",
+          "benign": false
+        },
+        {
+          "scenario": "s5_plaintext_creds_datastore",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        },
+        {
+          "scenario": "s6_exposed_token_datastore",
+          "transition": "t_creds",
+          "action": "search_creds",
+          "benign": false
+        },
+        {
+          "scenario": "s6_exposed_token_datastore",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "registry_pull_secret_exposed",
+      "mechanism": "Secrets 外部化 + 平文資格情報除去",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.07,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.01,
+        "burden": 0.06
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.3,
+      "efficiency": 14.286,
+      "blocked_paths": [
+        {
+          "scenario": "s9_registry_pull_secret",
+          "transition": "t_getcred",
+          "action": "get_secret",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "azure_managed_identity_overperm",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.05,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.105,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.025,
+        "burden": 0.08
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.4,
+      "efficiency": 9.524,
+      "blocked_paths": [
+        {
+          "scenario": "s15_azure_mi_role_assignment",
+          "transition": "t_assume",
+          "action": "assume_role",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "gcp_sa_impersonation",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.05,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.105,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.025,
+        "burden": 0.08
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.4,
+      "efficiency": 9.524,
+      "blocked_paths": [
+        {
+          "scenario": "s16_gcp_sa_impersonation",
+          "transition": "t_assume",
+          "action": "assume_role",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "sa_overdelegation_iam",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 2,
+      "max_rejection_rate": 0.05,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.105,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.025,
+        "burden": 0.08
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.4,
+      "efficiency": 9.524,
+      "blocked_paths": [
+        {
+          "scenario": "s2_imds_iam_pivot",
+          "transition": "t_assume",
+          "action": "assume_role",
+          "benign": false
+        },
+        {
+          "scenario": "s2_imds_iam_pivot",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "serverless_overperm",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 2,
+      "max_rejection_rate": 0.05,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.105,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.025,
+        "burden": 0.08
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.4,
+      "efficiency": 9.524,
+      "blocked_paths": [
+        {
+          "scenario": "s3_serverless_overperm",
+          "transition": "t_invoke",
+          "action": "invoke_function",
+          "benign": false
+        },
+        {
+          "scenario": "s3_serverless_overperm",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "wildcard_iam_policy",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.05,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.105,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.025,
+        "burden": 0.08
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.4,
+      "efficiency": 9.524,
+      "blocked_paths": [
+        {
+          "scenario": "s8_wildcard_iam_escalation",
+          "transition": "t_assume",
+          "action": "assume_role",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "anonymous_api_access",
+      "mechanism": "Admission 制約（bind/escalate 禁止）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.1117,
+      "cost_components": {
+        "latency": 0.0017,
+        "rejection": 0.01,
+        "burden": 0.1
+      },
+      "enforcement_latency_ms": 0.278,
+      "management_burden": 0.5,
+      "efficiency": 8.953,
+      "blocked_paths": [
+        {
+          "scenario": "s11_anonymous_api_escalate",
+          "transition": "t_recon",
+          "action": "recon",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "implicit_permission_escalate",
+      "mechanism": "Admission 制約（bind/escalate 禁止）",
+      "n_scenarios": 2,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 3,
+      "max_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.1117,
+      "cost_components": {
+        "latency": 0.0017,
+        "rejection": 0.01,
+        "burden": 0.1
+      },
+      "enforcement_latency_ms": 0.278,
+      "management_burden": 0.5,
+      "efficiency": 8.953,
+      "blocked_paths": [
+        {
+          "scenario": "s11_anonymous_api_escalate",
+          "transition": "t_escalate",
+          "action": "exploit_rbac",
+          "benign": false
+        },
+        {
+          "scenario": "s4_privpod_node_escape",
+          "transition": "t_escalate",
+          "action": "exploit_rbac",
+          "benign": false
+        },
+        {
+          "scenario": "s4_privpod_node_escape",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "imds_ssrf_exposure",
+      "mechanism": "NetworkPolicy 既定拒否 + メタデータ露出遮断",
+      "n_scenarios": 2,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 3,
+      "max_rejection_rate": 0.1,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.15,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.05,
+        "burden": 0.1
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.5,
+      "efficiency": 6.667,
+      "blocked_paths": [
+        {
+          "scenario": "s10_hostnet_imds_pivot",
+          "transition": "t_assume",
+          "action": "assume_role",
+          "benign": false
+        },
+        {
+          "scenario": "s2_imds_iam_pivot",
+          "transition": "t_ssrf",
+          "action": "http_request",
+          "benign": false
+        },
+        {
+          "scenario": "s2_imds_iam_pivot",
+          "transition": "t_persist",
+          "action": "http_request",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "egress_allow_all",
+      "mechanism": "NetworkPolicy 既定拒否 + メタデータ露出遮断",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.1,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.15,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.05,
+        "burden": 0.1
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.5,
+      "efficiency": 6.667,
+      "blocked_paths": [
+        {
+          "scenario": "s13_egress_exfil",
+          "transition": "t_lateral",
+          "action": "lateral_move",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "missing_networkpolicy",
+      "mechanism": "NetworkPolicy 既定拒否 + メタデータ露出遮断",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.1,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.15,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.05,
+        "burden": 0.1
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.5,
+      "efficiency": 6.667,
+      "blocked_paths": [
+        {
+          "scenario": "s1_rbac_secret_lateral",
+          "transition": "t_lateral",
+          "action": "lateral_move",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "public_bucket_acl",
+      "mechanism": "NetworkPolicy 既定拒否 + メタデータ露出遮断",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.1,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.15,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.05,
+        "burden": 0.1
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.5,
+      "efficiency": 6.667,
+      "blocked_paths": [
+        {
+          "scenario": "s7_public_bucket_exposure",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "host_network_pod",
+      "mechanism": "PodSecurity/eBPF ランタイムポリシー（特権禁止）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.08,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.1617,
+      "cost_components": {
+        "latency": 0.0017,
+        "rejection": 0.04,
+        "burden": 0.12
+      },
+      "enforcement_latency_ms": 0.278,
+      "management_burden": 0.6,
+      "efficiency": 6.184,
+      "blocked_paths": [
+        {
+          "scenario": "s10_hostnet_imds_pivot",
+          "transition": "t_imds",
+          "action": "http_request",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "privileged_pod_hostpath",
+      "mechanism": "PodSecurity/eBPF ランタイムポリシー（特権禁止）",
+      "n_scenarios": 2,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 2,
+      "max_rejection_rate": 0.08,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.1617,
+      "cost_components": {
+        "latency": 0.0017,
+        "rejection": 0.04,
+        "burden": 0.12
+      },
+      "enforcement_latency_ms": 0.278,
+      "management_burden": 0.6,
+      "efficiency": 6.184,
+      "blocked_paths": [
+        {
+          "scenario": "s14_privinit_node_escape",
+          "transition": "t_escape",
+          "action": "create_priv_pod",
+          "benign": false
+        },
+        {
+          "scenario": "s4_privpod_node_escape",
+          "transition": "t_privpod",
+          "action": "create_priv_pod",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "excessive_rbac_secrets",
+      "mechanism": "最小権限化（RBAC/IAM ロール削減）",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 3,
+      "max_rejection_rate": 0.3333,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.2467,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.1667,
+        "burden": 0.08
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.4,
+      "efficiency": 4.054,
+      "blocked_paths": [
+        {
+          "scenario": "s1_rbac_secret_lateral",
+          "transition": "t_steal_token",
+          "action": "get_secret",
+          "benign": false
+        },
+        {
+          "scenario": "s1_rbac_secret_lateral",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        },
+        {
+          "scenario": "s1_rbac_secret_lateral",
+          "transition": "t_benign_config",
+          "action": "get_secret",
+          "benign": true
+        }
+      ]
+    }
+  ],
+  "fleet_pareto_front": [
+    {
+      "misconfig": "plaintext_creds_env",
+      "mechanism": "Secrets 外部化 + 平文資格情報除去",
+      "n_scenarios": 3,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 5,
+      "max_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.07,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.01,
+        "burden": 0.06
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.3,
+      "efficiency": 14.286,
+      "blocked_paths": [
+        {
+          "scenario": "s12_serverless_plaintext_creds",
+          "transition": "t_search",
+          "action": "search_creds",
+          "benign": false
+        },
+        {
+          "scenario": "s5_plaintext_creds_datastore",
+          "transition": "t_creds",
+          "action": "search_creds",
+          "benign": false
+        },
+        {
+          "scenario": "s5_plaintext_creds_datastore",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        },
+        {
+          "scenario": "s6_exposed_token_datastore",
+          "transition": "t_creds",
+          "action": "search_creds",
+          "benign": false
+        },
+        {
+          "scenario": "s6_exposed_token_datastore",
+          "transition": "t_exfil",
+          "action": "query_datastore",
+          "benign": false
+        }
+      ]
+    },
+    {
+      "misconfig": "registry_pull_secret_exposed",
+      "mechanism": "Secrets 外部化 + 平文資格情報除去",
+      "n_scenarios": 1,
+      "mean_asr_reduction": 1.0,
+      "total_paths_blocked": 1,
+      "max_rejection_rate": 0.02,
+      "rejection_provenance": "estimate:literature",
+      "operational_cost": 0.07,
+      "cost_components": {
+        "latency": 0.0,
+        "rejection": 0.01,
+        "burden": 0.06
+      },
+      "enforcement_latency_ms": 0.0,
+      "management_burden": 0.3,
+      "efficiency": 14.286,
+      "blocked_paths": [
+        {
+          "scenario": "s9_registry_pull_secret",
+          "transition": "t_getcred",
+          "action": "get_secret",
+          "benign": false
+        }
+      ]
+    }
+  ],
+  "greedy_cumulative_curve": {
+    "baseline_asr": 1.0,
+    "curve": [
+      {
+        "deployed": [],
+        "n_defenses": 0,
+        "cumulative_cost": 0.0,
+        "mean_asr": 1.0,
+        "asr_reduction": 0.0
+      },
+      {
+        "deployed": [
+          "plaintext_creds_env"
+        ],
+        "n_defenses": 1,
+        "cumulative_cost": 0.07,
+        "mean_asr": 0.8125,
+        "asr_reduction": 0.1875
+      },
+      {
+        "deployed": [
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ],
+        "n_defenses": 2,
+        "cumulative_cost": 0.14,
+        "mean_asr": 0.75,
+        "asr_reduction": 0.25
+      },
+      {
+        "deployed": [
+          "azure_managed_identity_overperm",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ],
+        "n_defenses": 3,
+        "cumulative_cost": 0.245,
+        "mean_asr": 0.6875,
+        "asr_reduction": 0.3125
+      },
+      {
+        "deployed": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ],
+        "n_defenses": 4,
+        "cumulative_cost": 0.35,
+        "mean_asr": 0.625,
+        "asr_reduction": 0.375
+      },
+      {
+        "deployed": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam"
+        ],
+        "n_defenses": 5,
+        "cumulative_cost": 0.455,
+        "mean_asr": 0.5625,
+        "asr_reduction": 0.4375
+      },
+      {
+        "deployed": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm"
+        ],
+        "n_defenses": 6,
+        "cumulative_cost": 0.56,
+        "mean_asr": 0.5,
+        "asr_reduction": 0.5
+      },
+      {
+        "deployed": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 7,
+        "cumulative_cost": 0.665,
+        "mean_asr": 0.4375,
+        "asr_reduction": 0.5625
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 8,
+        "cumulative_cost": 0.7767,
+        "mean_asr": 0.375,
+        "asr_reduction": 0.625
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 9,
+        "cumulative_cost": 0.8884,
+        "mean_asr": 0.3125,
+        "asr_reduction": 0.6875
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 10,
+        "cumulative_cost": 1.0384,
+        "mean_asr": 0.25,
+        "asr_reduction": 0.75
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 11,
+        "cumulative_cost": 1.1884,
+        "mean_asr": 0.1875,
+        "asr_reduction": 0.8125
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 12,
+        "cumulative_cost": 1.3384,
+        "mean_asr": 0.125,
+        "asr_reduction": 0.875
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 13,
+        "cumulative_cost": 1.4884,
+        "mean_asr": 0.0625,
+        "asr_reduction": 0.9375
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "host_network_pod",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 14,
+        "cumulative_cost": 1.6501,
+        "mean_asr": 0.0625,
+        "asr_reduction": 0.9375
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "host_network_pod",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 15,
+        "cumulative_cost": 1.8118,
+        "mean_asr": 0.0,
+        "asr_reduction": 1.0
+      },
+      {
+        "deployed": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "excessive_rbac_secrets",
+          "gcp_sa_impersonation",
+          "host_network_pod",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ],
+        "n_defenses": 16,
+        "cumulative_cost": 2.0585,
+        "mean_asr": 0.0,
+        "asr_reduction": 1.0
+      }
+    ]
+  },
+  "true_pareto_frontier": {
+    "n_controls": 16,
+    "n_subsets_evaluated": 65536,
+    "baseline_asr": 1.0,
+    "min_achievable_asr": 0.0,
+    "optimal_min_cost_for_min_asr": {
+      "cumulative_cost": 1.4334,
+      "n_controls": 12,
+      "controls": [
+        "anonymous_api_access",
+        "azure_managed_identity_overperm",
+        "egress_allow_all",
+        "gcp_sa_impersonation",
+        "imds_ssrf_exposure",
+        "missing_networkpolicy",
+        "plaintext_creds_env",
+        "privileged_pod_hostpath",
+        "public_bucket_acl",
+        "registry_pull_secret_exposed",
+        "serverless_overperm",
+        "wildcard_iam_policy"
+      ]
+    },
+    "frontier": [
+      {
+        "n_controls": 0,
+        "cumulative_cost": 0,
+        "mean_asr": 1.0,
+        "asr_reduction": 0.0,
+        "controls": []
+      },
+      {
+        "n_controls": 1,
+        "cumulative_cost": 0.07,
+        "mean_asr": 0.8125,
+        "asr_reduction": 0.1875,
+        "controls": [
+          "plaintext_creds_env"
+        ]
+      },
+      {
+        "n_controls": 2,
+        "cumulative_cost": 0.14,
+        "mean_asr": 0.75,
+        "asr_reduction": 0.25,
+        "controls": [
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "n_controls": 2,
+        "cumulative_cost": 0.1817,
+        "mean_asr": 0.6875,
+        "asr_reduction": 0.3125,
+        "controls": [
+          "implicit_permission_escalate",
+          "plaintext_creds_env"
+        ]
+      },
+      {
+        "n_controls": 3,
+        "cumulative_cost": 0.2517,
+        "mean_asr": 0.625,
+        "asr_reduction": 0.375,
+        "controls": [
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "n_controls": 3,
+        "cumulative_cost": 0.3317,
+        "mean_asr": 0.5625,
+        "asr_reduction": 0.4375,
+        "controls": [
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env"
+        ]
+      },
+      {
+        "n_controls": 4,
+        "cumulative_cost": 0.4017,
+        "mean_asr": 0.5,
+        "asr_reduction": 0.5,
+        "controls": [
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "n_controls": 5,
+        "cumulative_cost": 0.5067,
+        "mean_asr": 0.4375,
+        "asr_reduction": 0.5625,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "n_controls": 6,
+        "cumulative_cost": 0.6117,
+        "mean_asr": 0.375,
+        "asr_reduction": 0.625,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "n_controls": 7,
+        "cumulative_cost": 0.7167,
+        "mean_asr": 0.3125,
+        "asr_reduction": 0.6875,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm"
+        ]
+      },
+      {
+        "n_controls": 8,
+        "cumulative_cost": 0.8217,
+        "mean_asr": 0.25,
+        "asr_reduction": 0.75,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "n_controls": 9,
+        "cumulative_cost": 0.9717,
+        "mean_asr": 0.1875,
+        "asr_reduction": 0.8125,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "n_controls": 10,
+        "cumulative_cost": 1.1217,
+        "mean_asr": 0.125,
+        "asr_reduction": 0.875,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "n_controls": 11,
+        "cumulative_cost": 1.2717,
+        "mean_asr": 0.0625,
+        "asr_reduction": 0.9375,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "n_controls": 12,
+        "cumulative_cost": 1.4334,
+        "mean_asr": 0.0,
+        "asr_reduction": 1.0,
+        "controls": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      }
+    ]
+  },
+  "ordering_baselines": {
+    "baseline_asr": 1.0,
+    "min_achievable_asr": 0.0,
+    "optimal_min_cost_for_min_asr": {
+      "cumulative_cost": 1.4334,
+      "n_controls": 12,
+      "controls": [
+        "anonymous_api_access",
+        "azure_managed_identity_overperm",
+        "egress_allow_all",
+        "gcp_sa_impersonation",
+        "imds_ssrf_exposure",
+        "missing_networkpolicy",
+        "plaintext_creds_env",
+        "privileged_pod_hostpath",
+        "public_bucket_acl",
+        "registry_pull_secret_exposed",
+        "serverless_overperm",
+        "wildcard_iam_policy"
+      ]
+    },
+    "orders": {
+      "efficiency_greedy": {
+        "order": [
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy",
+          "anonymous_api_access",
+          "implicit_permission_escalate",
+          "egress_allow_all",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "public_bucket_acl",
+          "host_network_pod",
+          "privileged_pod_hostpath",
+          "excessive_rbac_secrets"
+        ],
+        "curve": [
+          {
+            "n_defenses": 0,
+            "cumulative_cost": 0.0,
+            "mean_asr": 1.0,
+            "asr_reduction": 0.0,
+            "deployed": []
+          },
+          {
+            "n_defenses": 1,
+            "cumulative_cost": 0.07,
+            "mean_asr": 0.8125,
+            "asr_reduction": 0.1875,
+            "deployed": [
+              "plaintext_creds_env"
+            ]
+          },
+          {
+            "n_defenses": 2,
+            "cumulative_cost": 0.14,
+            "mean_asr": 0.75,
+            "asr_reduction": 0.25,
+            "deployed": [
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed"
+            ]
+          },
+          {
+            "n_defenses": 3,
+            "cumulative_cost": 0.245,
+            "mean_asr": 0.6875,
+            "asr_reduction": 0.3125,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed"
+            ]
+          },
+          {
+            "n_defenses": 4,
+            "cumulative_cost": 0.35,
+            "mean_asr": 0.625,
+            "asr_reduction": 0.375,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed"
+            ]
+          },
+          {
+            "n_defenses": 5,
+            "cumulative_cost": 0.455,
+            "mean_asr": 0.5625,
+            "asr_reduction": 0.4375,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam"
+            ]
+          },
+          {
+            "n_defenses": 6,
+            "cumulative_cost": 0.56,
+            "mean_asr": 0.5,
+            "asr_reduction": 0.5,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 7,
+            "cumulative_cost": 0.665,
+            "mean_asr": 0.4375,
+            "asr_reduction": 0.5625,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 8,
+            "cumulative_cost": 0.7767,
+            "mean_asr": 0.375,
+            "asr_reduction": 0.625,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 9,
+            "cumulative_cost": 0.8884,
+            "mean_asr": 0.3125,
+            "asr_reduction": 0.6875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 10,
+            "cumulative_cost": 1.0384,
+            "mean_asr": 0.25,
+            "asr_reduction": 0.75,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 11,
+            "cumulative_cost": 1.1884,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 12,
+            "cumulative_cost": 1.3384,
+            "mean_asr": 0.125,
+            "asr_reduction": 0.875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 13,
+            "cumulative_cost": 1.4884,
+            "mean_asr": 0.0625,
+            "asr_reduction": 0.9375,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 14,
+            "cumulative_cost": 1.6501,
+            "mean_asr": 0.0625,
+            "asr_reduction": 0.9375,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 15,
+            "cumulative_cost": 1.8118,
+            "mean_asr": 0.0,
+            "asr_reduction": 1.0,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 16,
+            "cumulative_cost": 2.0585,
+            "mean_asr": 0.0,
+            "asr_reduction": 1.0,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          }
+        ],
+        "cost_to_reach_min_asr": 1.8118,
+        "n_controls_to_reach_min_asr": 15,
+        "excess_cost_vs_optimal": 0.3784,
+        "max_cost_gap_to_frontier": 0.6251
+      },
+      "attack_frequency": {
+        "order": [
+          "plaintext_creds_env",
+          "excessive_rbac_secrets",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "privileged_pod_hostpath",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "host_network_pod",
+          "missing_networkpolicy",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "wildcard_iam_policy"
+        ],
+        "curve": [
+          {
+            "n_defenses": 0,
+            "cumulative_cost": 0.0,
+            "mean_asr": 1.0,
+            "asr_reduction": 0.0,
+            "deployed": []
+          },
+          {
+            "n_defenses": 1,
+            "cumulative_cost": 0.07,
+            "mean_asr": 0.8125,
+            "asr_reduction": 0.1875,
+            "deployed": [
+              "plaintext_creds_env"
+            ]
+          },
+          {
+            "n_defenses": 2,
+            "cumulative_cost": 0.3167,
+            "mean_asr": 0.75,
+            "asr_reduction": 0.25,
+            "deployed": [
+              "excessive_rbac_secrets",
+              "plaintext_creds_env"
+            ]
+          },
+          {
+            "n_defenses": 3,
+            "cumulative_cost": 0.4667,
+            "mean_asr": 0.625,
+            "asr_reduction": 0.375,
+            "deployed": [
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "plaintext_creds_env"
+            ]
+          },
+          {
+            "n_defenses": 4,
+            "cumulative_cost": 0.5784,
+            "mean_asr": 0.5,
+            "asr_reduction": 0.5,
+            "deployed": [
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env"
+            ]
+          },
+          {
+            "n_defenses": 5,
+            "cumulative_cost": 0.7401,
+            "mean_asr": 0.4375,
+            "asr_reduction": 0.5625,
+            "deployed": [
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath"
+            ]
+          },
+          {
+            "n_defenses": 6,
+            "cumulative_cost": 0.8451,
+            "mean_asr": 0.4375,
+            "asr_reduction": 0.5625,
+            "deployed": [
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam"
+            ]
+          },
+          {
+            "n_defenses": 7,
+            "cumulative_cost": 0.9501,
+            "mean_asr": 0.375,
+            "asr_reduction": 0.625,
+            "deployed": [
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 8,
+            "cumulative_cost": 1.0618,
+            "mean_asr": 0.375,
+            "asr_reduction": 0.625,
+            "deployed": [
+              "anonymous_api_access",
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 9,
+            "cumulative_cost": 1.1668,
+            "mean_asr": 0.3125,
+            "asr_reduction": 0.6875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 10,
+            "cumulative_cost": 1.3168,
+            "mean_asr": 0.25,
+            "asr_reduction": 0.75,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 11,
+            "cumulative_cost": 1.4218,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 12,
+            "cumulative_cost": 1.5835,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 13,
+            "cumulative_cost": 1.7335,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 14,
+            "cumulative_cost": 1.8835,
+            "mean_asr": 0.125,
+            "asr_reduction": 0.875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 15,
+            "cumulative_cost": 1.9535,
+            "mean_asr": 0.0625,
+            "asr_reduction": 0.9375,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 16,
+            "cumulative_cost": 2.0585,
+            "mean_asr": 0.0,
+            "asr_reduction": 1.0,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          }
+        ],
+        "cost_to_reach_min_asr": 2.0585,
+        "n_controls_to_reach_min_asr": 16,
+        "excess_cost_vs_optimal": 0.6251,
+        "max_cost_gap_to_frontier": 0.7618
+      },
+      "cost_ascending": {
+        "order": [
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "sa_overdelegation_iam",
+          "serverless_overperm",
+          "wildcard_iam_policy",
+          "anonymous_api_access",
+          "implicit_permission_escalate",
+          "egress_allow_all",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "public_bucket_acl",
+          "host_network_pod",
+          "privileged_pod_hostpath",
+          "excessive_rbac_secrets"
+        ],
+        "curve": [
+          {
+            "n_defenses": 0,
+            "cumulative_cost": 0.0,
+            "mean_asr": 1.0,
+            "asr_reduction": 0.0,
+            "deployed": []
+          },
+          {
+            "n_defenses": 1,
+            "cumulative_cost": 0.07,
+            "mean_asr": 0.8125,
+            "asr_reduction": 0.1875,
+            "deployed": [
+              "plaintext_creds_env"
+            ]
+          },
+          {
+            "n_defenses": 2,
+            "cumulative_cost": 0.14,
+            "mean_asr": 0.75,
+            "asr_reduction": 0.25,
+            "deployed": [
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed"
+            ]
+          },
+          {
+            "n_defenses": 3,
+            "cumulative_cost": 0.245,
+            "mean_asr": 0.6875,
+            "asr_reduction": 0.3125,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed"
+            ]
+          },
+          {
+            "n_defenses": 4,
+            "cumulative_cost": 0.35,
+            "mean_asr": 0.625,
+            "asr_reduction": 0.375,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed"
+            ]
+          },
+          {
+            "n_defenses": 5,
+            "cumulative_cost": 0.455,
+            "mean_asr": 0.5625,
+            "asr_reduction": 0.4375,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam"
+            ]
+          },
+          {
+            "n_defenses": 6,
+            "cumulative_cost": 0.56,
+            "mean_asr": 0.5,
+            "asr_reduction": 0.5,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 7,
+            "cumulative_cost": 0.665,
+            "mean_asr": 0.4375,
+            "asr_reduction": 0.5625,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 8,
+            "cumulative_cost": 0.7767,
+            "mean_asr": 0.375,
+            "asr_reduction": 0.625,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 9,
+            "cumulative_cost": 0.8884,
+            "mean_asr": 0.3125,
+            "asr_reduction": 0.6875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "gcp_sa_impersonation",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 10,
+            "cumulative_cost": 1.0384,
+            "mean_asr": 0.25,
+            "asr_reduction": 0.75,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 11,
+            "cumulative_cost": 1.1884,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 12,
+            "cumulative_cost": 1.3384,
+            "mean_asr": 0.125,
+            "asr_reduction": 0.875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 13,
+            "cumulative_cost": 1.4884,
+            "mean_asr": 0.0625,
+            "asr_reduction": 0.9375,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 14,
+            "cumulative_cost": 1.6501,
+            "mean_asr": 0.0625,
+            "asr_reduction": 0.9375,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 15,
+            "cumulative_cost": 1.8118,
+            "mean_asr": 0.0,
+            "asr_reduction": 1.0,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 16,
+            "cumulative_cost": 2.0585,
+            "mean_asr": 0.0,
+            "asr_reduction": 1.0,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          }
+        ],
+        "cost_to_reach_min_asr": 1.8118,
+        "n_controls_to_reach_min_asr": 15,
+        "excess_cost_vs_optimal": 0.3784,
+        "max_cost_gap_to_frontier": 0.6251
+      },
+      "random": {
+        "order": [
+          "privileged_pod_hostpath",
+          "serverless_overperm",
+          "host_network_pod",
+          "azure_managed_identity_overperm",
+          "plaintext_creds_env",
+          "egress_allow_all",
+          "excessive_rbac_secrets",
+          "public_bucket_acl",
+          "sa_overdelegation_iam",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "gcp_sa_impersonation",
+          "anonymous_api_access",
+          "imds_ssrf_exposure",
+          "wildcard_iam_policy",
+          "registry_pull_secret_exposed"
+        ],
+        "curve": [
+          {
+            "n_defenses": 0,
+            "cumulative_cost": 0.0,
+            "mean_asr": 1.0,
+            "asr_reduction": 0.0,
+            "deployed": []
+          },
+          {
+            "n_defenses": 1,
+            "cumulative_cost": 0.1617,
+            "mean_asr": 0.875,
+            "asr_reduction": 0.125,
+            "deployed": [
+              "privileged_pod_hostpath"
+            ]
+          },
+          {
+            "n_defenses": 2,
+            "cumulative_cost": 0.2667,
+            "mean_asr": 0.8125,
+            "asr_reduction": 0.1875,
+            "deployed": [
+              "privileged_pod_hostpath",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 3,
+            "cumulative_cost": 0.4284,
+            "mean_asr": 0.75,
+            "asr_reduction": 0.25,
+            "deployed": [
+              "host_network_pod",
+              "privileged_pod_hostpath",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 4,
+            "cumulative_cost": 0.5334,
+            "mean_asr": 0.6875,
+            "asr_reduction": 0.3125,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "host_network_pod",
+              "privileged_pod_hostpath",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 5,
+            "cumulative_cost": 0.6034,
+            "mean_asr": 0.5,
+            "asr_reduction": 0.5,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "host_network_pod",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 6,
+            "cumulative_cost": 0.7534,
+            "mean_asr": 0.4375,
+            "asr_reduction": 0.5625,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "host_network_pod",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 7,
+            "cumulative_cost": 1.0001,
+            "mean_asr": 0.375,
+            "asr_reduction": 0.625,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "host_network_pod",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 8,
+            "cumulative_cost": 1.1501,
+            "mean_asr": 0.3125,
+            "asr_reduction": 0.6875,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "host_network_pod",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 9,
+            "cumulative_cost": 1.2551,
+            "mean_asr": 0.25,
+            "asr_reduction": 0.75,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "host_network_pod",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 10,
+            "cumulative_cost": 1.3668,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "host_network_pod",
+              "implicit_permission_escalate",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 11,
+            "cumulative_cost": 1.5168,
+            "mean_asr": 0.1875,
+            "asr_reduction": 0.8125,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "host_network_pod",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 12,
+            "cumulative_cost": 1.6218,
+            "mean_asr": 0.125,
+            "asr_reduction": 0.875,
+            "deployed": [
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 13,
+            "cumulative_cost": 1.7335,
+            "mean_asr": 0.125,
+            "asr_reduction": 0.875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 14,
+            "cumulative_cost": 1.8835,
+            "mean_asr": 0.125,
+            "asr_reduction": 0.875,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm"
+            ]
+          },
+          {
+            "n_defenses": 15,
+            "cumulative_cost": 1.9885,
+            "mean_asr": 0.0625,
+            "asr_reduction": 0.9375,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          },
+          {
+            "n_defenses": 16,
+            "cumulative_cost": 2.0585,
+            "mean_asr": 0.0,
+            "asr_reduction": 1.0,
+            "deployed": [
+              "anonymous_api_access",
+              "azure_managed_identity_overperm",
+              "egress_allow_all",
+              "excessive_rbac_secrets",
+              "gcp_sa_impersonation",
+              "host_network_pod",
+              "imds_ssrf_exposure",
+              "implicit_permission_escalate",
+              "missing_networkpolicy",
+              "plaintext_creds_env",
+              "privileged_pod_hostpath",
+              "public_bucket_acl",
+              "registry_pull_secret_exposed",
+              "sa_overdelegation_iam",
+              "serverless_overperm",
+              "wildcard_iam_policy"
+            ]
+          }
+        ],
+        "cost_to_reach_min_asr": 2.0585,
+        "n_controls_to_reach_min_asr": 16,
+        "excess_cost_vs_optimal": 0.6251,
+        "max_cost_gap_to_frontier": 0.7618
+      }
+    }
+  },
+  "weight_sensitivity": {
+    "n_settings": 66,
+    "baseline_weights": {
+      "latency": 0.3,
+      "rejection": 0.5,
+      "burden": 0.2
+    },
+    "baseline_top1": "plaintext_creds_env",
+    "top1_stable_fraction": 1.0,
+    "mean_kendall_tau": 0.8687,
+    "min_kendall_tau": 0.7,
+    "top1_winners": {
+      "plaintext_creds_env": 66
+    }
+  },
+  "alternative_controls": [
+    {
+      "misconfig_kind": "insecure_default",
+      "primary_mechanism": "PodSecurity/eBPF ランタイムポリシー（特権禁止）",
+      "alternative_mechanism": "eBPF ランタイムポリシー（Tetragon/KubeArmor: 特権 syscall/実行の実行時強制）",
+      "enforcement_latency_ms": 0.05,
+      "base_rejection_rate": 0.1,
+      "management_burden": 0.7,
+      "operational_cost": 0.1903,
+      "cost_components": {
+        "latency": 0.0003,
+        "rejection": 0.05,
+        "burden": 0.14
+      },
+      "latency_provenance": "estimate:literature",
+      "rejection_provenance": "estimate:literature",
+      "role": "defense-in-depth (runtime); primary is deploy-time"
+    },
+    {
+      "misconfig_kind": "implicit_permission",
+      "primary_mechanism": "Admission 制約（bind/escalate 禁止）",
+      "alternative_mechanism": "eBPF ランタイムポリシー（Tetragon/KubeArmor: bind/escalate 実行時検知・遮断）",
+      "enforcement_latency_ms": 0.05,
+      "base_rejection_rate": 0.06,
+      "management_burden": 0.7,
+      "operational_cost": 0.1703,
+      "cost_components": {
+        "latency": 0.0003,
+        "rejection": 0.03,
+        "burden": 0.14
+      },
+      "latency_provenance": "estimate:literature",
+      "rejection_provenance": "estimate:literature",
+      "role": "defense-in-depth (runtime); primary is deploy-time"
+    }
+  ]
+}
