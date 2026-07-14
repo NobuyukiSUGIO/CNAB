@@ -11,8 +11,8 @@
       "gen": "v2",
       "arch": "moe",
       "quant": "Q4_K_S",
-      "available": false,
-      "note": "downloaded (curl) but not registrable via LM Studio CLI in headless env; import via GUI to enable"
+      "available": true,
+      "note": "registered by clearing stale LM Studio download-job records (single-downloads-info.json / download-jobs-info.json) + removing .part, then restart-rescan; the CLI importer could not force a reindex headless"
     },
     {
       "key": "qwen/qwen3.5-35b-a3b",
@@ -93,9 +93,9 @@
       "total_b": 27,
       "gen": "2",
       "arch": "dense",
-      "available": false,
-      "note": "downloaded (curl) but not registrable via LM Studio CLI in headless env; import via GUI to enable"
+      "available": true,
+      "note": "registered by clearing stale LM Studio download-job records (single-downloads-info.json / download-jobs-info.json) + removing .part, then restart-rescan; the CLI importer could not force a reindex headless"
     }
   ],
-  "_status": "8 of 10 models registered and evaluated (see results/MULTIFAMILY_LADDER.md). gemma-2-27b-it and deepseek-v2-lite-chat were downloaded but the LM Studio CLI importer hangs headless; enable them via the LM Studio GUI (My Models -> import) then set available=true."
+  "_status": "10 of 10 models registered and evaluated (see results/MULTIFAMILY_LADDER.md). gemma-2-27b-it (high-tier 3rd family) and deepseek-v2-lite-chat (low-active 3rd family) were registered by clearing stale download-job records + .part then restart-rescan; the full 3-tier x 3-family grid is now complete."
 }
