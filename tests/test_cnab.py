@@ -397,6 +397,34 @@ class TestTruePareto(unittest.TestCase):
             opt["cumulative_cost"],
             c2["optimal_min_cost_for_min_asr"]["cumulative_cost"] - 1e-9)
 
+    def test_frontier_fp_uncertainty_propagates_but_set_is_stable(self):
+        """査読 §主要懸念8/最優先5: 偽陽性の不確実性を前線へ伝播。最適集合は不変、
+        コストのみ [r=0, modeled proxy] の範囲で動き、Beta 事後でも集合は安定する。"""
+        from cnab.defense import frontier_rejection_sensitivity
+        scs, fleet = self._fleet()
+        s = frontier_rejection_sensitivity(scs, "C2", fleet, budget=32, seeds=SEEDS,
+                                           n_boot=500, rng_seed=0)
+        c = s["conditions"]
+        # 3 条件とも同一の 12 制御最適集合（棄却率は残存 ASR に影響しない）
+        z = c["r_zero_measured_point"]["controls"]
+        m = c["modeled_proxy"]["controls"]
+        u = c["r_upper95_bound"]["controls"]
+        self.assertEqual(z, m)
+        self.assertEqual(z, u)
+        # コストは単調: r=0 <= 95%上限 <= modeled proxy（proxy が最も保守的＝高コスト）
+        self.assertLessEqual(c["r_zero_measured_point"]["optimal_cost"],
+                             c["r_upper95_bound"]["optimal_cost"] + 1e-9)
+        self.assertLessEqual(c["r_upper95_bound"]["optimal_cost"],
+                             c["modeled_proxy"]["optimal_cost"] + 1e-9)
+        # Beta 事後ブートストラップでも最適集合は完全に安定（集合は不確実性に依らない）
+        self.assertTrue(s["bootstrap"]["optimal_set_stable"])
+        self.assertEqual(s["bootstrap"]["n_distinct_optimal_sets"], 1)
+        lo, hi = s["bootstrap"]["optimal_cost_ci95"]
+        self.assertLessEqual(lo, hi)
+        # 管理負荷 b を +-50% 振っても最適集合は不変
+        for v in s["burden_sensitivity"].values():
+            self.assertTrue(v["set_unchanged"])
+
 
 class TestAgentInformationBoundary(unittest.TestCase):
     """査読 §主要懸念4: 参照エージェントが隠れたオラクル情報を読まないことを保証する。

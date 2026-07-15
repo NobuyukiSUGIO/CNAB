@@ -45,6 +45,47 @@
     "_reach_at_budget4": {
       "C1": 0.8125,
       "C2": 0.9883
+    },
+    "scenario_level": {
+      "unit": "scenario",
+      "n_scenarios": 8,
+      "reach_scenario_cluster_ci95": {
+        "C0": [
+          0.8789,
+          0.9544
+        ],
+        "C1": [
+          1.0,
+          1.0
+        ],
+        "C2": [
+          1.0,
+          1.0
+        ]
+      },
+      "reach_point": {
+        "C0": 0.918,
+        "C1": 1.0,
+        "C2": 1.0
+      },
+      "exact_permutation_2pow8": {
+        "C0_vs_C1_reach": {
+          "mean_paired_diff": -0.082,
+          "p_value": 0.0156,
+          "significant": true
+        },
+        "C1_vs_C2_reach": {
+          "mean_paired_diff": 0.0,
+          "p_value": 1.0,
+          "significant": false
+        },
+        "C1_vs_C2_cost": {
+          "mean_paired_diff": 1.0312,
+          "p_value": 0.0156,
+          "significant": true
+        }
+      },
+      "note": "eval-only (8 held-out scenarios); exact sign-flip over all 2^8=256 assignments; scenario-cluster bootstrap CI (seed 0, 5000 resamples). Matches paper Sec. Agent-Evaluation held-out paragraph."
     }
   },
   "all": {

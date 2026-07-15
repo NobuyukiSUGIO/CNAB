@@ -30,7 +30,8 @@ from .attackgraph import (aggregate_graphs, evaluate, evaluate_coverage,
                           ground_truth)
 from .defense import (alternative_mechanisms, cross_scenario_defense,
                       cumulative_pareto, defense_baselines, evaluate_policy,
-                      fleet_pareto, generate_policies, graph_robust_frontier,
+                      fleet_pareto, frontier_rejection_sensitivity,
+                      generate_policies, graph_robust_frontier,
                       latency_calibration_report, load_defense_calibration,
                       pareto_front, true_pareto_frontier, weight_sensitivity)
 from .fidelity import differential
@@ -271,6 +272,9 @@ def cmd_harden(args) -> None:
                                   budget=args.budget, seeds=seeds)
     # graph-robust 前線: 全実行可能経路を断つ最小コスト（エージェント非依存, §懸念3）。
     robust = graph_robust_frontier(scenarios, fleet)
+    # 偽陽性不確実性の前線への伝播（r=0/proxy/95%上限 + Beta 事後ブートストラップ, §懸念8）。
+    fp_sensitivity = frontier_rejection_sensitivity(scenarios, args.config, fleet,
+                                                    budget=args.budget, seeds=seeds)
     _print({
         "config": args.config,
         "n_scenarios": len(scenarios),
@@ -286,6 +290,8 @@ def cmd_harden(args) -> None:
         "ordering_baselines": baselines,
         # graph-robust 前線（C2 の実経路ではなく全 feasible 経路を断つ最小コスト集合）
         "graph_robust_frontier": robust,
+        # 偽陽性(0/40)の不確実性を厳密最適へ伝播（3条件 + Beta 事後 + 管理負荷感度, §懸念8）
+        "frontier_fp_sensitivity": fp_sensitivity,
         # Cop の重み感度分析（査読 §5: 重み・正規化が優先順位を左右しないことを示す）
         "weight_sensitivity": weight_sensitivity(fleet),
         # eBPF ランタイムポリシー（Tetragon/KubeArmor）を代替/多層防御として提示（設計書6章候補）

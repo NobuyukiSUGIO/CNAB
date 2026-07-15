@@ -22,7 +22,7 @@ make fidelity   # (2)(4) managed-backend differential check (emulator vs managed
 make iac        # (2) scenario -> declarative IaC deployment plan
 make defend     # (5) defense synthesis + A/B re-evaluation + Pareto (RQ5)
 make harden     # (5) fleet-wide defense prioritization (cross-scenario Pareto + cumulative)
-make test       # regression suite (unittest, 55 tests)
+make test       # regression suite (unittest, 65 tests)
 make repro      # verify the canonical-suite output digest (mechanical determinism proof)
 # Real-cloud primary validation (AWS, run by the user in a disposable account) -> aws/README.md
 ```
@@ -42,8 +42,8 @@ separate, optional procedures). On a stock Python environment this completes in 
 git clone https://github.com/NobuyukiSUGIO/CNAB.git && cd CNAB
 pip install -r requirements.txt
 
-# 2. Regression suite (55 tests)
-make test        # -> Ran 55 tests ... OK
+# 2. Regression suite (65 tests)
+make test        # -> Ran 65 tests ... OK
 
 # 3. Mechanical determinism / reproducibility check (the paper's central claim)
 make repro       # -> "reproduced": true
@@ -56,7 +56,7 @@ digest, and compares it against the expected value committed to the repository
 that the paper's numbers were reproduced byte-for-byte in this environment.
 
 - Expected digest: `sha256:9f06077e284b84d9a76aa03e39a8e704c41db194708dee3f4e62228062332148`
-- Verified on a clean environment: a fresh clone passes `make test` (55 tests) and
+- Verified on a clean environment: a fresh clone passes `make test` (65 tests) and
   `make repro` (`reproduced: true`).
 
 **Regenerate the paper's main tables** (all deterministic, offline, machine-readable JSON):
@@ -219,13 +219,18 @@ lever, the **prompt scaffold** can be switched across three levels (`full`/`inte
 to remove the saturation (ceiling effect) of the smallest models and measure raw planning ability.
 
 Measurements and findings are persisted in
-**[`results/LOCAL_LLM_LADDER.md`](results/LOCAL_LLM_LADDER.md)** (4 models: dense 9B/27B +
-MoE 3.5/3.6-35b-a3b). Key point: **on hard tasks requiring multi-stage planning, attack
-reachability scales monotonically with "active parameters," not total parameter count**
-(`minimal` reachability active 3B (0.00, 0.42) < 9B (0.55) < 27B (0.75)). **Even within the
-same generation (3.5), the MoE `qwen3.5-35b-a3b` (35B total, active ~3B) is catastrophically
-worse than dense 9B (0.55 -> 0.00)** — active, not total, parameters explain capability. The
-effect is difficulty-dependent; on the easy `interface` task even the sparse MoE saturates.
+**[`results/MULTIFAMILY_LADDER.md`](results/MULTIFAMILY_LADDER.md)** (ten models across five
+families: Qwen, Gemma, Mistral, Llama, DeepSeek). Key point, stated with the confound the
+data actually shows: **within a family the active-parameter ordering holds** (e.g. Qwen
+3B-a3b `0.833` ≈ 9B `0.708` < 27B `1.000`; Mistral 7B `0.158` < 24B `0.667`), **but across
+families at matched active parameters reach is confounded by interface adherence** — it
+tracks the **tool-call error rate**, not active parameters alone (dense 7–9B: Qwen-9B reach
+`0.708`/err `0.026` > Llama-8B `0.356`/`0.096` > Mistral-7B `0.158`/`0.417`; DeepSeek-V2-Lite
+is the weakest at `0.083` despite 16B total, because it emits the most malformed calls). We
+therefore **do not treat "active, not total, parameters" as a headline**: it is consistent
+within families but the cross-family signal is dominated by whether a model can operate the
+agentic interface at all. This is an exploratory, quantized, single-GPU comparison — not a
+multi-vendor frontier study — and is **not part of the reproducible core**.
 
 ---
 
@@ -380,8 +385,8 @@ cnab/
 ├── k8s/                   # (5) K8s enforcement-latency measurement harnesses (measured:kind calibration)
 ├── run_local.py           # run one scenario on a local LLM (LM Studio)
 ├── run_ladder.py          # local-LLM compute-ladder sweep (small -> medium -> large)
-├── results/               # measurement artifacts (LOCAL_LLM_LADDER.md, REPRO_DIGEST.txt, *.json)
-├── tests/test_cnab.py     # regression suite (55 tests)
+├── results/               # measurement artifacts (MULTIFAMILY_LADDER.md, REPRO_DIGEST.txt, *.json)
+├── tests/test_cnab.py     # regression suite (65 tests)
 ├── requirements.txt / pyproject.toml / Makefile
 ```
 

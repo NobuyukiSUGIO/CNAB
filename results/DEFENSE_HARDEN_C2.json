@@ -2551,6 +2551,112 @@
       }
     ]
   },
+  "frontier_fp_sensitivity": {
+    "measured_fp_trials": 40,
+    "in_band_measured_kinds": [
+      "implicit_permission",
+      "insecure_default",
+      "isolation_gap"
+    ],
+    "min_asr": 0.0,
+    "conditions": {
+      "r_zero_measured_point": {
+        "in_band_rejection": 0.0,
+        "optimal_cost": 1.1834,
+        "n_controls": 12,
+        "controls": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      "modeled_proxy": {
+        "in_band_rejection": {
+          "implicit_permission": 0.02,
+          "isolation_gap": 0.1,
+          "insecure_default": 0.08
+        },
+        "optimal_cost": 1.4334,
+        "n_controls": 12,
+        "controls": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      "r_upper95_bound": {
+        "in_band_rejection": 0.072,
+        "optimal_cost": 1.3994,
+        "n_controls": 12,
+        "controls": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      }
+    },
+    "bootstrap": {
+      "posterior": "Jeffreys Beta(0.5,0.5) + 0/40 -> Beta(0.5,40.5) per in-band control (admission, NetworkPolicy drawn independently)",
+      "n_boot": 2000,
+      "optimal_cost_mean": 1.2202,
+      "optimal_cost_ci95": [
+        1.1845,
+        1.3267
+      ],
+      "n_distinct_optimal_sets": 1,
+      "optimal_set_stable": true,
+      "modal_optimal_n_controls": 12
+    },
+    "burden_sensitivity": {
+      "burden_x0.5": {
+        "optimal_cost": 0.9034,
+        "n_controls": 12,
+        "set_unchanged": true
+      },
+      "burden_x0.75": {
+        "optimal_cost": 1.1684,
+        "n_controls": 12,
+        "set_unchanged": true
+      },
+      "burden_x1.25": {
+        "optimal_cost": 1.6984,
+        "n_controls": 12,
+        "set_unchanged": true
+      },
+      "burden_x1.5": {
+        "optimal_cost": 1.9634,
+        "n_controls": 12,
+        "set_unchanged": true
+      }
+    }
+  },
   "weight_sensitivity": {
     "n_settings": 66,
     "baseline_weights": {
