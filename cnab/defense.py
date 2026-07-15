@@ -662,6 +662,68 @@ def true_pareto_frontier(scenarios: list[Scenario], config_id: str,
     }
 
 
+def _goal_reachable_under(scenario: Scenario, disabled: frozenset[str]) -> bool:
+    """指定した設定ミスに紐づく遷移を無効化したとき、ゴールが *グラフ上* 到達可能か。
+
+    エージェントの方策とは独立の、正解グラフ（全 feasible 攻撃経路 + benign）に対する
+    前向き到達可能性。benign 遷移（misconfig=None）は常に利用可能。査読 §主要懸念3:
+    「特定の C2 攻撃者にとっての最適」ではなく「全実行可能経路を断つ最適」を測るための基盤。
+    """
+    held = set(scenario.initial_capabilities)
+    avail = [t for t in scenario.transitions if t.misconfig not in disabled]
+    changed = True
+    while changed:
+        changed = False
+        for t in avail:
+            if t.requires <= held and not t.grants <= held:
+                held |= t.grants
+                changed = True
+    return scenario.goal_capabilities <= held
+
+
+def graph_robust_frontier(scenarios: list[Scenario], fleet: list[FleetDefense]
+                          ) -> dict:
+    """全実行可能経路を断つ最小コスト制御集合（graph-robust frontier）。査読 §主要懸念3。
+
+    エージェント非依存: 各制御部分集合について、全シナリオのゴールが *グラフ上* 到達
+    不能になるか（＝どんな攻撃者・強い LLM・再計画する adaptive attacker でも通れない）を
+    判定し、そうなる最小コスト集合を厳密列挙で求める。これは A/B で観測される
+    「C2 の現方策に対する最適(12制御/1.43)」より強く、一般に多くの制御を要する。
+    """
+    controls = sorted({f.misconfig for f in fleet})
+    n = len(controls)
+    cost_map = _control_cost_map(fleet)
+
+    points: list[tuple[float, int, tuple]] = []  # (cost, #scenarios still feasible, set)
+    for mask in range(1 << n):
+        subset = tuple(controls[i] for i in range(n) if mask & (1 << i))
+        disabled = frozenset(subset)
+        still = sum(1 for s in scenarios if _goal_reachable_under(s, disabled))
+        cost = round(sum(cost_map[m] for m in subset), 6)
+        points.append((cost, still, subset))
+
+    # 全ゴールを断つ（still==0）最小コスト集合
+    cutting = [(c, s) for c, still, s in points if still == 0]
+    if cutting:
+        opt_cost, opt_set = min(cutting, key=lambda cs: (cs[0], len(cs[1])))
+        robust = {"cuts_all_paths": True,
+                  "cumulative_cost": round(opt_cost, 4),
+                  "n_controls": len(opt_set), "controls": list(opt_set)}
+    else:
+        robust = {"cuts_all_paths": False,
+                  "note": "no control subset cuts every scenario's goal (some path "
+                          "uses no catalogued misconfiguration)"}
+    # 非支配スカイライン: (cost, #still-feasible=残存到達可能シナリオ数) を最小化
+    sky = _skyline([(c, float(still), s) for c, still, s in points])
+    frontier = [{"cumulative_cost": round(c, 4),
+                 "scenarios_still_feasible": int(still),
+                 "n_controls": len(s), "controls": list(s)}
+                for c, still, s in sky]
+    return {"n_controls": n, "n_subsets_evaluated": len(points),
+            "n_scenarios": len(scenarios),
+            "graph_robust_optimum": robust, "frontier": frontier}
+
+
 def _order_curve(table: dict, mis_of: dict, scenarios: list[Scenario],
                  order: list[str], cost_map: dict[str, float],
                  baseline: float) -> list[dict]:

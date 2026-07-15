@@ -2338,6 +2338,219 @@
       }
     }
   },
+  "graph_robust_frontier": {
+    "n_controls": 16,
+    "n_subsets_evaluated": 65536,
+    "n_scenarios": 16,
+    "graph_robust_optimum": {
+      "cuts_all_paths": true,
+      "cumulative_cost": 1.4334,
+      "n_controls": 12,
+      "controls": [
+        "anonymous_api_access",
+        "azure_managed_identity_overperm",
+        "egress_allow_all",
+        "gcp_sa_impersonation",
+        "imds_ssrf_exposure",
+        "missing_networkpolicy",
+        "plaintext_creds_env",
+        "privileged_pod_hostpath",
+        "public_bucket_acl",
+        "registry_pull_secret_exposed",
+        "serverless_overperm",
+        "wildcard_iam_policy"
+      ]
+    },
+    "frontier": [
+      {
+        "cumulative_cost": 0,
+        "scenarios_still_feasible": 16,
+        "n_controls": 0,
+        "controls": []
+      },
+      {
+        "cumulative_cost": 0.07,
+        "scenarios_still_feasible": 13,
+        "n_controls": 1,
+        "controls": [
+          "plaintext_creds_env"
+        ]
+      },
+      {
+        "cumulative_cost": 0.14,
+        "scenarios_still_feasible": 12,
+        "n_controls": 2,
+        "controls": [
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "cumulative_cost": 0.1817,
+        "scenarios_still_feasible": 11,
+        "n_controls": 2,
+        "controls": [
+          "implicit_permission_escalate",
+          "plaintext_creds_env"
+        ]
+      },
+      {
+        "cumulative_cost": 0.2517,
+        "scenarios_still_feasible": 10,
+        "n_controls": 3,
+        "controls": [
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "cumulative_cost": 0.3317,
+        "scenarios_still_feasible": 9,
+        "n_controls": 3,
+        "controls": [
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env"
+        ]
+      },
+      {
+        "cumulative_cost": 0.4017,
+        "scenarios_still_feasible": 8,
+        "n_controls": 4,
+        "controls": [
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "cumulative_cost": 0.5067,
+        "scenarios_still_feasible": 7,
+        "n_controls": 5,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "cumulative_cost": 0.6117,
+        "scenarios_still_feasible": 6,
+        "n_controls": 6,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed"
+        ]
+      },
+      {
+        "cumulative_cost": 0.7167,
+        "scenarios_still_feasible": 5,
+        "n_controls": 7,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm"
+        ]
+      },
+      {
+        "cumulative_cost": 0.8217,
+        "scenarios_still_feasible": 4,
+        "n_controls": 8,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "cumulative_cost": 0.9717,
+        "scenarios_still_feasible": 3,
+        "n_controls": 9,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "cumulative_cost": 1.1217,
+        "scenarios_still_feasible": 2,
+        "n_controls": 10,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "cumulative_cost": 1.2717,
+        "scenarios_still_feasible": 1,
+        "n_controls": 11,
+        "controls": [
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "implicit_permission_escalate",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      },
+      {
+        "cumulative_cost": 1.4334,
+        "scenarios_still_feasible": 0,
+        "n_controls": 12,
+        "controls": [
+          "anonymous_api_access",
+          "azure_managed_identity_overperm",
+          "egress_allow_all",
+          "gcp_sa_impersonation",
+          "imds_ssrf_exposure",
+          "missing_networkpolicy",
+          "plaintext_creds_env",
+          "privileged_pod_hostpath",
+          "public_bucket_acl",
+          "registry_pull_secret_exposed",
+          "serverless_overperm",
+          "wildcard_iam_policy"
+        ]
+      }
+    ]
+  },
   "weight_sensitivity": {
     "n_settings": 66,
     "baseline_weights": {

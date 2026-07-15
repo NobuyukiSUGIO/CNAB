@@ -378,6 +378,25 @@ class TestTruePareto(unittest.TestCase):
         self.assertAlmostEqual(opt["cumulative_cost"],
                                min(f["cumulative_cost"] for f in on_front), places=6)
 
+    def test_graph_robust_frontier_cuts_all_paths(self):
+        """査読 §主要懸念3: graph-robust 前線は全 feasible 経路を断つ（エージェント非依存）。"""
+        from cnab.defense import graph_robust_frontier, _goal_reachable_under
+        scs, fleet = self._fleet()
+        gr = graph_robust_frontier(scs, fleet)
+        self.assertEqual(gr["n_subsets_evaluated"], 1 << gr["n_controls"])
+        opt = gr["graph_robust_optimum"]
+        self.assertTrue(opt["cuts_all_paths"])
+        # 最適集合を無効化すると、実際に *どのシナリオも* グラフ上ゴール到達不能
+        disabled = frozenset(opt["controls"])
+        for s in scs:
+            self.assertFalse(_goal_reachable_under(s, disabled),
+                             f"{s.id} still reachable under graph-robust optimum")
+        # C2 固有最適 ⊆ graph-robust 最適のコスト（robust は緩められない）
+        c2 = true_pareto_frontier(scs, "C2", fleet, budget=32, seeds=SEEDS)
+        self.assertGreaterEqual(
+            opt["cumulative_cost"],
+            c2["optimal_min_cost_for_min_asr"]["cumulative_cost"] - 1e-9)
+
 
 class TestAgentInformationBoundary(unittest.TestCase):
     """査読 §主要懸念4: 参照エージェントが隠れたオラクル情報を読まないことを保証する。
@@ -434,6 +453,40 @@ class TestAgentInformationBoundary(unittest.TestCase):
             for banned in ("Scenario", "transition", "milestone", "attack_transitions"):
                 self.assertNotIn(banned, blob,
                                  f"{cfg} holds a reference to {banned}")
+
+    def test_identifier_obfuscation_preserves_solvability(self):
+        """査読 §主要懸念4: goal↔target の語彙的重なりを消しても C1/C2 は解ける。
+
+        識別子難読化（prefix は保持, name 部を不透明化）で goal_hit ヒントを除去しても、
+        C1/C2 の到達率・ASR が保たれる＝ベンチマークは string-matching パズルではなく、
+        グラフ構造（偵察→露出→悪用の連鎖）で解けることを機械的に確認する。
+        """
+        from cnab.obfuscate import obfuscate_scenario, lexical_overlap_rate
+        # 難読化シナリオはグラフ上も同型（ゴール到達可能）で、識別子は変化する。
+        # 付随的な語トークン重なりは減る（構造的な goal=最終能力の一致はオラクルが要求
+        # するため保持される）。
+        for sid in ("s1_rbac_secret_lateral", "s2_imds_iam_pivot"):
+            s = load()[sid]
+            obf = obfuscate_scenario(s)
+            self.assertTrue(obf._goal_reachable())
+            self.assertNotEqual(sorted(obf.goal_capabilities),
+                                sorted(s.goal_capabilities))   # 識別子が難読化された
+            self.assertLessEqual(lexical_overlap_rate(obf),
+                                 lexical_overlap_rate(s) + 1e-9)  # 重なりは増えない
+        # C1/C2 の到達率・ASR は難読化前後で不変（＝語彙ヒントに依存していない）
+        for cfg in ("C1", "C2"):
+            for sid in ("s1_rbac_secret_lateral", "s2_imds_iam_pivot",
+                        "s10_hostnet_imds_pivot"):
+                s = load()[sid]
+                orig = aggregate([r.record for r in
+                                  run_seeds(s, cfg, budget=32, seeds=SEEDS)])
+                obf = aggregate([r.record for r in
+                                 run_seeds(obfuscate_scenario(s), cfg, budget=32,
+                                           seeds=SEEDS)])
+                self.assertAlmostEqual(orig.stage_reachability_mean,
+                                       obf.stage_reachability_mean, places=6,
+                                       msg=f"{cfg}/{sid} reach changed under obfuscation")
+                self.assertAlmostEqual(orig.asr, obf.asr, places=6)
 
 
 class TestCatalogPrecondition(unittest.TestCase):

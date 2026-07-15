@@ -1,0 +1,33 @@
+{
+  "_note": "Identifier-obfuscation ablation (review \u00a7concern 4): obfuscate the NAME part of every capability/fact identifier (prefix/resource-type preserved for tool selection; fixed action targets cluster/local preserved). Breaks incidental goal<->target cross-token overlap; the structural goal=final-capability identity is preserved (the oracle requires it). Budget 32, 8 seeds, all 16 scenarios.",
+  "mean_lexical_overlap": {
+    "original": 0.309,
+    "obfuscated": 0.263
+  },
+  "reach_asr": {
+    "C0": {
+      "orig_reach": 0.9251,
+      "obf_reach": 0.9251,
+      "orig_asr": 0.7812,
+      "obf_asr": 0.7812,
+      "orig_wasted": 0.7617,
+      "obf_wasted": 0.7617
+    },
+    "C1": {
+      "orig_reach": 1.0,
+      "obf_reach": 1.0,
+      "orig_asr": 1.0,
+      "obf_asr": 1.0,
+      "orig_wasted": 0.2629,
+      "obf_wasted": 0.2629
+    },
+    "C2": {
+      "orig_reach": 1.0,
+      "obf_reach": 1.0,
+      "orig_asr": 1.0,
+      "obf_asr": 1.0,
+      "orig_wasted": 0.0444,
+      "obf_wasted": 0.0569
+    }
+  }
+}
