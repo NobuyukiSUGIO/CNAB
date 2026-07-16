@@ -961,5 +961,147 @@ class TestRepresentativenessCatalog(unittest.TestCase):
             self.assertTrue(mc.CATALOG[mid].source)
 
 
+class _FakeVendorClient:
+    """OpenAI 互換 chat.completions のフェイク（オフライン検証用・network/key 不要）。
+
+    reject_params に挙げたパラメータが payload に含まれる限り 400 相当の例外を投げ、
+    除外され次第、行動 JSON を返す。マルチベンダのパラメータフォールバックを検証する。
+    """
+
+    def __init__(self, action_json='{"tool": "recon", "target": "cluster"}',
+                 reject_params=(), reject_max_tokens=False, total_tokens=42,
+                 truncate_below=0):
+        self._json = action_json
+        self._reject = set(reject_params)
+        self._reject_max_tokens = reject_max_tokens
+        self._tot = total_tokens
+        # truncate_below: 実効トークン上限がこの値未満なら reasoning 打ち切り 400 を返す。
+        self._truncate_below = truncate_below
+        self.calls = []
+        self.chat = self  # chat.completions.create の両方を自分で受ける
+        self.completions = self
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        for p in self._reject:
+            if p in kwargs:
+                raise RuntimeError(f"Unsupported parameter: '{p}' is not supported.")
+        if self._reject_max_tokens and "max_tokens" in kwargs:
+            raise RuntimeError("Use 'max_completion_tokens' instead of 'max_tokens'.")
+        cap = kwargs.get("max_completion_tokens", kwargs.get("max_tokens", 0))
+        if self._truncate_below and cap < self._truncate_below:
+            raise RuntimeError(
+                "Could not finish the message because max_tokens or model output "
+                "limit was reached. Please try again with higher max_tokens.")
+
+        class _U:
+            total_tokens = self._tot
+
+        class _M:
+            content = self._json
+            reasoning_content = None
+
+        class _C:
+            message = _M()
+            finish_reason = "stop"
+
+        class _R:
+            choices = [_C()]
+            usage = _U()
+        return _R()
+
+
+class TestVendorAgents(unittest.TestCase):
+    """査読 §主要懸念2/6: マルチベンダ（Claude/GPT/Gemini）対応をオフライン検証する。
+
+    実 API・キーは使わず、OpenAI 互換クライアントを注入して、(1) ファクトリと
+    キー解決、(2) プロバイダ差異（seed / max_tokens 非対応）への実行時フォールバック、
+    (3) ローカル ladder と同一の計測（トークン・tool-call error）を確認する。
+    """
+
+    def _obs(self):
+        from cnab.environment.env import Observation
+        return Observation(
+            goal_description="goal", goal_capabilities=frozenset({"cap:goal"}),
+            held_capabilities=frozenset(), known_facts=("secret:x",),
+            last=None, step=0)
+
+    def test_provider_registry_and_key_resolution(self):
+        import os
+        from cnab.agents import vendors
+        for name, spec in vendors.PROVIDERS.items():
+            self.assertIn("api_key_env", spec)
+            self.assertTrue(spec["note"])
+        # 環境変数からキーを解決／未設定なら明確に失敗
+        env = vendors.PROVIDERS["openai"]["api_key_env"][0]
+        old = os.environ.get(env)
+        try:
+            os.environ[env] = "sk-test"
+            self.assertEqual(vendors.resolve_api_key("openai"), "sk-test")
+            self.assertTrue(vendors.has_api_key("openai"))
+            del os.environ[env]
+            self.assertFalse(vendors.has_api_key("openai"))
+            with self.assertRaises(RuntimeError):
+                vendors.resolve_api_key("openai")
+        finally:
+            if old is not None:
+                os.environ[env] = old
+            elif env in os.environ:
+                del os.environ[env]
+
+    def test_vendor_agent_same_metrics_path(self):
+        """注入クライアントで行動選択・トークン計測が通常経路と同一に動く。"""
+        from cnab.agents.vendors import build_vendor_agent
+        client = _FakeVendorClient()
+        ag = build_vendor_agent("gemini", "gemini-test", seed=1,
+                                client=client, api_key="x", scaffold="minimal")
+        obs = self._obs()
+        ag.reset(obs, seed=1)
+        act = ag.act(obs)
+        self.assertEqual((act.tool, act.target), ("recon", "cluster"))
+        self.assertEqual(ag.tokens_used, 42)          # 同一のトークン計測経路
+        self.assertEqual(ag.steps_emitted, 1)
+        self.assertEqual(ag.tool_call_errors, 0)      # recon/cluster は妥当
+
+    def test_seed_unsupported_fallback(self):
+        """seed 非対応ベンダで seed を落として再試行し、以後 seed を送らない。"""
+        from cnab.agents.vendors import build_vendor_agent
+        client = _FakeVendorClient(reject_params=("seed",))
+        ag = build_vendor_agent("anthropic", "claude-test", seed=7,
+                                client=client, api_key="x")
+        obs = self._obs()
+        ag.reset(obs, seed=7)
+        act = ag.act(obs)
+        self.assertEqual(act.tool, "recon")
+        self.assertIn("seed", ag._unsupported)        # 非対応を学習
+        self.assertGreaterEqual(len(client.calls), 2)  # 1 回目拒否 → 2 回目成功
+        self.assertNotIn("seed", client.calls[-1])     # 成功呼び出しに seed 無し
+
+    def test_max_completion_tokens_fallback(self):
+        """max_tokens 非対応（OpenAI reasoning 系）で max_completion_tokens へスワップ。"""
+        from cnab.agents.vendors import build_vendor_agent
+        client = _FakeVendorClient(reject_max_tokens=True)
+        ag = build_vendor_agent("openai", "o-test", seed=0, client=client, api_key="x")
+        obs = self._obs()
+        ag.reset(obs, seed=0)
+        ag.act(obs)
+        self.assertTrue(ag._use_max_completion)
+        self.assertIn("max_completion_tokens", client.calls[-1])
+        self.assertNotIn("max_tokens", client.calls[-1])
+
+    def test_reasoning_token_truncation_autobumps(self):
+        """reasoning 系（GPT-5/o 系）の『出力上限到達 400』で max_tokens を自動増やす。"""
+        from cnab.agents.vendors import build_vendor_agent
+        client = _FakeVendorClient(truncate_below=16384)  # 1024 では打ち切り
+        ag = build_vendor_agent("openai", "gpt-5", seed=0, client=client,
+                                api_key="x", max_tokens=1024)
+        obs = self._obs()
+        ag.reset(obs, seed=0)
+        act = ag.act(obs)
+        self.assertEqual(act.tool, "recon")               # 増枠後に成功
+        self.assertGreaterEqual(ag.max_tokens, 16384)      # 上限を引き上げた
+        self.assertLessEqual(ag.max_tokens, ag._MAX_TOKENS_CEILING)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

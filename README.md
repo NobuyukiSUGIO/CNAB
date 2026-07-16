@@ -22,7 +22,7 @@ make fidelity   # (2)(4) managed-backend differential check (emulator vs managed
 make iac        # (2) scenario -> declarative IaC deployment plan
 make defend     # (5) defense synthesis + A/B re-evaluation + Pareto (RQ5)
 make harden     # (5) fleet-wide defense prioritization (cross-scenario Pareto + cumulative)
-make test       # regression suite (unittest, 65 tests)
+make test       # regression suite (unittest, 70 tests)
 make repro      # verify the canonical-suite output digest (mechanical determinism proof)
 # Real-cloud primary validation (AWS, run by the user in a disposable account) -> aws/README.md
 ```
@@ -42,8 +42,8 @@ separate, optional procedures). On a stock Python environment this completes in 
 git clone https://github.com/NobuyukiSUGIO/CNAB.git && cd CNAB
 pip install -r requirements.txt
 
-# 2. Regression suite (65 tests)
-make test        # -> Ran 65 tests ... OK
+# 2. Regression suite (70 tests)
+make test        # -> Ran 70 tests ... OK
 
 # 3. Mechanical determinism / reproducibility check (the paper's central claim)
 make repro       # -> "reproduced": true
@@ -56,7 +56,7 @@ digest, and compares it against the expected value committed to the repository
 that the paper's numbers were reproduced byte-for-byte in this environment.
 
 - Expected digest: `sha256:9f06077e284b84d9a76aa03e39a8e704c41db194708dee3f4e62228062332148`
-- Verified on a clean environment: a fresh clone passes `make test` (65 tests) and
+- Verified on a clean environment: a fresh clone passes `make test` (70 tests) and
   `make repro` (`reproduced: true`).
 
 **Regenerate the paper's main tables** (all deterministic, offline, machine-readable JSON):
@@ -229,8 +229,49 @@ tracks the **tool-call error rate**, not active parameters alone (dense 7–9B: 
 is the weakest at `0.083` despite 16B total, because it emits the most malformed calls). We
 therefore **do not treat "active, not total, parameters" as a headline**: it is consistent
 within families but the cross-family signal is dominated by whether a model can operate the
-agentic interface at all. This is an exploratory, quantized, single-GPU comparison — not a
-multi-vendor frontier study — and is **not part of the reproducible core**.
+agentic interface at all. This is an exploratory, quantized, single-GPU comparison, and is
+**not part of the reproducible core**.
+
+### Multi-vendor frontier (Claude / GPT / Gemini)
+
+The same harness drives **hosted frontier models** on the *identical* code path and metrics.
+Because GPT, Gemini, and Claude all expose OpenAI-compatible `chat.completions` endpoints,
+`cnab/agents/vendors.py` builds the same `LMStudioAgent` (same token accounting, tool-call-error
+classification, transcript, and scaffold) with only `base_url`/`api_key`/`model` swapped — so
+vendor results are directly comparable to the local ladder and to each other (apples-to-apples).
+
+```bash
+# Keys are read from env only (no secrets on disk). Set whichever you have; others are skipped.
+export ANTHROPIC_API_KEY=...   # and/or OPENAI_API_KEY / GEMINI_API_KEY
+python run_vendor_ladder.py --config vendor_models.json \
+  --scaffold minimal --budget 20 --seeds 0,1,2,3,4 --temps 0.0,0.7 --date 2026-07-15
+```
+
+Provider quirks (unsupported `seed`, `max_completion_tokens`-only reasoning models,
+`response_format` gaps) are absorbed by a runtime fallback in `LMStudioAgent`. Like the local
+ladder, multi-vendor runs are **not part of `make repro`** (provider/runtime nondeterminism);
+the deterministic reference agents remain the yardstick. The CNAB environment is fully offline,
+synthetic, and opaque-token — the only external call is the LLM choosing the next action.
+
+**Result** (7 models, 3 vendors, `interface` scaffold, `T=0`, hard subset, `K=3`; full
+provenance/manifest and per-scenario reach in [`results/VENDOR_LADDER.md`](results/VENDOR_LADDER.md)):
+
+| Model | Vendor | Reach | p@k | pa@k | tool-err |
+|---|---|---:|---:|---:|---:|
+| `gemini-2.5-flash` | Google | 0.917 | 1.00 | 0.67 | 0.121 |
+| `gemini-2.5-pro` | Google | 0.889 | 1.00 | 0.83 | 0.003 |
+| `gpt-4o` | OpenAI | 0.833 | 0.83 | 0.83 | 0.000 |
+| `claude-sonnet-5` | Anthropic | 0.667 | 0.83 | 0.50 | 0.000 |
+| `claude-haiku-4.5` | Anthropic | 0.537 | 0.50 | 0.50 | 0.003 |
+| `gpt-4.1` | OpenAI | 0.167 | 0.33 | 0.00 | 0.000 |
+| `gpt-4o-mini` | OpenAI | 0.083 | 0.17 | 0.00 | 0.094 |
+
+Three findings survive the vendor change: (i) **interface adherence and planning dissociate in
+both directions** — `gpt-4.1`/`claude-sonnet-5` emit zero malformed calls yet reach only
+0.167/0.667, while `gemini-2.5-flash` tops the ladder despite the highest error rate; (ii) **reach
+does not track vendor flagship ranking** — `gpt-4o` (0.833) beats the newer `gpt-4.1` (0.167)
+five-fold; (iii) **a vendor×domain interaction** — `gpt-4o` and both Claude models fail the GCP
+service-account scenario (`s16`) that both Gemini models solve perfectly.
 
 ---
 
@@ -370,7 +411,7 @@ cnab/
 │   ├── backend_aws.py     # (2) real-AWS backend (real-cloud primary validation)
 │   ├── iac.py             # (2) scenario -> declarative IaC deployment-plan renderer
 │   ├── tools/api.py       # (3) standard tool API (action space)
-│   ├── agents/            # (3) C0/C1/C2 reference + LLM drop-in (llm.py=Anthropic, lmstudio.py=local)
+│   ├── agents/            # (3) C0/C1/C2 reference + LLM drop-in (llm.py=Anthropic, lmstudio.py=local, vendors.py=Claude/GPT/Gemini)
 │   ├── oracle.py          # (4) ground-truth oracle
 │   ├── metrics.py         # (4) stage reachability / ASR / pass@k / compute curves
 │   ├── attackgraph.py     # (4) attack-graph extraction + precision/recall
@@ -385,8 +426,11 @@ cnab/
 ├── k8s/                   # (5) K8s enforcement-latency measurement harnesses (measured:kind calibration)
 ├── run_local.py           # run one scenario on a local LLM (LM Studio)
 ├── run_ladder.py          # local-LLM compute-ladder sweep (small -> medium -> large)
+├── run_multifamily_ladder.py  # local multi-family ladder (10 open-weights models)
+├── run_vendor_ladder.py   # multi-vendor frontier ladder (Claude/GPT/Gemini, OpenAI-compatible)
+├── vendor_models.json     # multi-vendor config (keys read from env; no secrets on disk)
 ├── results/               # measurement artifacts (MULTIFAMILY_LADDER.md, REPRO_DIGEST.txt, *.json)
-├── tests/test_cnab.py     # regression suite (65 tests)
+├── tests/test_cnab.py     # regression suite (70 tests)
 ├── requirements.txt / pyproject.toml / Makefile
 ```
 

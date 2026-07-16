@@ -1,0 +1,7 @@
+{
+  "_note": "Claude-only config for an INCREMENTAL run (OpenAI+Gemini already in results/VENDOR_LADDER.json). Run to a SEPARATE --out, then merge. Verify ids with anthropic.Anthropic().models.list() if a 404 occurs.",
+  "models": [
+    {"provider": "anthropic", "model": "claude-haiku-4-5-20251001", "key": "claude-haiku", "family": "anthropic", "tier": "small", "label": "Claude Haiku 4.5"},
+    {"provider": "anthropic", "model": "claude-sonnet-5",           "key": "claude-sonnet-5", "family": "anthropic", "tier": "top", "label": "Claude Sonnet 5"}
+  ]
+}

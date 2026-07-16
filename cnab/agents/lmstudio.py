@@ -213,9 +213,11 @@ class LMStudioAgent(Agent):
                  temperature: float = 0.0, top_p: float | None = None,
                  max_tokens: int = 1024,
                  seed: int = 0, structured: bool = False,
-                 api_key: str = DEFAULT_API_KEY, scaffold: str = "full"):
+                 api_key: str = DEFAULT_API_KEY, scaffold: str = "full",
+                 client=None):
         self.base_url = base_url.rstrip("/")
-        self._client = _new_client(self.base_url, api_key)
+        # client 注入（テスト・カスタム経路）: 与えられればそれを使い openai SDK 依存を回避。
+        self._client = client if client is not None else _new_client(self.base_url, api_key)
         self.model = model or resolve_model(self.base_url)
         if config_id:
             self.config_id = config_id
@@ -242,6 +244,11 @@ class LMStudioAgent(Agent):
         # デバッグ用: 直近応答の思考・打ち切り理由を保持（content 空問題の切り分け）。
         self.last_reasoning: str | None = None
         self.last_finish_reason: str | None = None
+        # プロバイダ差異への実行時フォールバック状態（マルチベンダ対応）。一度検知した
+        # 非対応パラメータ／必須スワップは run 内で保持し、apples-to-apples を維持する。
+        self._no_system = False
+        self._use_max_completion = False       # OpenAI reasoning 系: max_completion_tokens 必須
+        self._unsupported: set[str] = set()     # seed/top_p/temperature/response_format の非対応
 
     # ---- ライフサイクル -------------------------------------------------
     def reset(self, observation: Observation, seed: int = 0) -> None:
@@ -286,6 +293,86 @@ class LMStudioAgent(Agent):
         lines.append("次の 1 行動を {\"tool\":..., \"target\":...} で選べ。")
         return "\n".join(lines)
 
+    # reasoning 系のトークン上限自動引き上げの上限（暴走コスト防止）。
+    _MAX_TOKENS_CEILING = 32768
+
+    # プロバイダ差異でしばしば拒否されるパラメータ名 → エラーメッセージ内の手掛かり。
+    _VENDOR_PARAM_HINTS = {
+        "seed": ("seed",),
+        "top_p": ("top_p", "top-p"),
+        "temperature": ("temperature",),
+        "response_format": ("response_format", "json_schema"),
+    }
+
+    def _payload(self) -> dict:
+        """chat.completions.create の引数を、検知済みの非対応パラメータを除いて組む。"""
+        kwargs: dict = {
+            "model": self.model,
+            "messages": self._messages,
+            "temperature": self.temperature,
+            "seed": self._seed,
+        }
+        # OpenAI reasoning 系は max_tokens を拒否し max_completion_tokens を要求する。
+        tok_key = "max_completion_tokens" if self._use_max_completion else "max_tokens"
+        kwargs[tok_key] = self.max_tokens
+        if self.top_p is not None:
+            kwargs["top_p"] = self.top_p          # 再現性（5.4）: top-p を明示固定
+        if self.structured:
+            kwargs["response_format"] = _response_format()
+        for p in self._unsupported:               # プロバイダが弾いたパラメータを除外
+            kwargs.pop(p, None)
+        return kwargs
+
+    def _create(self, rendered: str):
+        """chat.completions.create をプロバイダ差異に頑健に実行する（マルチベンダ対応）。
+
+        400 系エラーのメッセージから、(a) system ロール非対応、(b) max_tokens 非対応
+        （reasoning 系 → max_completion_tokens）、(c) seed/top_p/temperature/response_format
+        の非対応を検知し、当該調整を加えて再試行する（最大 6 回）。検知結果は run 内で
+        保持し、以後のステップも同じ調整で呼ぶ（apples-to-apples の計測を維持）。
+        """
+        last_exc = None
+        for _ in range(6):
+            try:
+                return self._client.chat.completions.create(**self._payload())
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                msg = str(exc).lower()
+                changed = False
+                # (a) system ロール非対応（ローカル Mistral 系テンプレート等）
+                if (("only user and assistant" in msg
+                     or ("system" in msg and "role" in msg and "support" in msg))
+                        and not self._no_system):
+                    self._no_system = True
+                    self._build_messages(rendered)   # system を最初の user へ畳み込む
+                    changed = True
+                # (b) max_tokens 非対応（OpenAI reasoning 系は max_completion_tokens）
+                if ("max_completion_tokens" in msg and not self._use_max_completion):
+                    self._use_max_completion = True
+                    changed = True
+                # (d) reasoning 系が推論でトークン上限に達し完了できない（GPT-5/o 系）。
+                # 出力が推論に食われた 400。上限を大きく引き上げて再試行する（run 内で保持）。
+                trunc = (("could not finish" in msg or "output limit" in msg
+                          or "higher max_tokens" in msg or "length limit" in msg)
+                         and ("max_tokens" in msg or "max_completion_tokens" in msg
+                              or "output" in msg))
+                if trunc and self.max_tokens < self._MAX_TOKENS_CEILING:
+                    self.max_tokens = min(self._MAX_TOKENS_CEILING,
+                                          max(self.max_tokens * 8, 16384))
+                    changed = True
+                # (c) 非対応パラメータをメッセージから検知して以後除外
+                rejecty = any(k in msg for k in (
+                    "unsupported", "not support", "does not support", "unknown",
+                    "unrecognized", "invalid", "must be", "not allowed", "not permitted"))
+                if rejecty:
+                    for param, hints in self._VENDOR_PARAM_HINTS.items():
+                        if param not in self._unsupported and any(h in msg for h in hints):
+                            self._unsupported.add(param)
+                            changed = True
+                if not changed:
+                    raise
+        raise last_exc
+
     # ---- 行動選択 -------------------------------------------------------
     def act(self, observation: Observation) -> Action:
         # 2 ターン目以降は最新観測を会話に追加
@@ -293,34 +380,7 @@ class LMStudioAgent(Agent):
         if self._messages and self._messages[-1]["role"] == "assistant":
             self._messages.append({"role": "user", "content": rendered})
 
-        def _payload() -> dict:
-            kwargs: dict = {
-                "model": self.model,
-                "messages": self._messages,
-                "temperature": self.temperature,
-                "max_tokens": self.max_tokens,
-                "seed": self._seed,
-            }
-            if self.top_p is not None:
-                kwargs["top_p"] = self.top_p     # 再現性（5.4）: top-p を明示固定
-            if self.structured:
-                kwargs["response_format"] = _response_format()
-            return kwargs
-
-        try:
-            resp = self._client.chat.completions.create(**_payload())
-        except Exception as exc:  # noqa: BLE001
-            # system ロール非対応モデル（Mistral 系など）は最初の呼び出しで 400 を返す。
-            # システムプロンプトを user へ畳み込んで会話全体を組み直し、一度だけ再試行する。
-            msg = str(exc).lower()
-            role_issue = ("only user and assistant" in msg
-                          or ("system" in msg and "role" in msg and "support" in msg))
-            if role_issue and not getattr(self, "_no_system", False):
-                self._no_system = True
-                self._build_messages(rendered)   # system を最初の user に畳み込む
-                resp = self._client.chat.completions.create(**_payload())
-            else:
-                raise
+        resp = self._create(rendered)
 
         usage = resp.usage
         step_tokens = int(getattr(usage, "total_tokens", 0) or 0) if usage is not None else 0

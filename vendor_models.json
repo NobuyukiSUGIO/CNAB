@@ -1,0 +1,12 @@
+{
+  "_note": "Multi-vendor frontier config for run_vendor_ladder.py. API keys are read from env at runtime (OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY); no secrets here. Models whose provider key is unset are skipped. IMPORTANT: verify each `model` id exists on YOUR account (use the models.list() one-liners in the README) and edit accordingly. Ordered cheap->top per vendor so a partial run still yields a comparison. Reasoning models (gpt-5.x / o-series / claude-opus with thinking) cost more and may ignore temperature; keep seeds low for those. Real-LLM runs are NOT part of `make repro`.",
+  "models": [
+    {"provider": "openai",    "model": "gpt-4o-mini",       "key": "gpt-4o-mini",       "family": "openai",    "tier": "small", "label": "GPT-4o-mini"},
+    {"provider": "openai",    "model": "gpt-4.1",           "key": "gpt-4.1",           "family": "openai",    "tier": "mid",   "label": "GPT-4.1"},
+    {"provider": "openai",    "model": "gpt-4o",            "key": "gpt-4o",            "family": "openai",    "tier": "top",   "label": "GPT-4o"},
+    {"provider": "anthropic", "model": "claude-haiku-4-5-20251001",  "key": "claude-haiku",  "family": "anthropic", "tier": "small", "label": "Claude Haiku 4.5"},
+    {"provider": "anthropic", "model": "claude-sonnet-5",   "key": "claude-sonnet-5",   "family": "anthropic", "tier": "top",   "label": "Claude Sonnet 5"},
+    {"provider": "gemini",    "model": "gemini-2.5-flash",  "key": "gemini-2.5-flash",  "family": "google",    "tier": "small", "label": "Gemini 2.5 Flash"},
+    {"provider": "gemini",    "model": "gemini-2.5-pro",    "key": "gemini-2.5-pro",    "family": "google",    "tier": "top",   "label": "Gemini 2.5 Pro"}
+  ]
+}

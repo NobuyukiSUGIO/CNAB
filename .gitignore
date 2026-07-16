@@ -29,3 +29,9 @@ aws/*.zip
 
 # Verbose LLM-sweep progress logs (data is in the .json)
 results/multifamily_*.log
+
+# Vendor-ladder scratch: smoke configs and per-run transcript dumps (debug only).
+# The curated config (vendor_models.json) and final results are tracked; these are not.
+smoke*.json
+nano_*.json
+*_transcript.json
